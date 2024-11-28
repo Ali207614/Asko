@@ -1,12 +1,23 @@
+const moment = require('moment');
+const { db } = require('../config');
 
-const { get } = require('lodash')
-const moment = require('moment')
-let { db } = require('../config')
+class DataRepositories {
+    constructor(dbName) {
+        this.db = dbName;
+    }
 
+    // OPCH so'rovini qaytaradi
+    getSalesManager({ login = '', password = '' }) {
+        return `
+        SELECT T0."SlpCode", T0."SlpName", T0."GroupCode", T0."Telephone", T0."U_login", T0."U_password", T0."U_branch" FROM ${this.db}.OSLP T0 where T0."U_login"= '${login}' and T0."U_password"='${password}'`;
+    }
 
-module.exports = {
-
-    GETOPCH: `SELECT T0."DocType", T0."CANCELED", T0."DocStatus", T0."DocDueDate", T1."ItemCode", T1."Dscription" FROM ${db}.OPCH T0  INNER JOIN ${db}.PCH1 T1 ON T0."DocEntry" = T1."DocEntry" WHERE T0."DocType" ='I' and  T0."CANCELED" ='N' and  T0."DocStatus" ='O'`,
+    // Boshqa so'rovlar uchun metodlar qo'shishingiz mumkin
+    getAnotherQuery() {
+        return `
+      SELECT * FROM ${this.db}.SomeTable WHERE condition = true;
+    `;
+    }
 }
 
-
+module.exports = new DataRepositories(db);

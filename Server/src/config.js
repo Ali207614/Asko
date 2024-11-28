@@ -5,11 +5,10 @@ require('dotenv').config();
 
 
 // let token = process.env.token
-let token = process.env.test_token
 
 const conn_params = {
-    // serverNode: process.env.server_node,
-    serverNode: process.env.server_node_local,
+    serverNode: process.env.server_node,
+    // serverNode: process.env.server_node_local,
     uid: process.env.uid,
     pwd: process.env.password,
 };
@@ -29,20 +28,20 @@ const api_params = {
 // const api = process.env.api
 const api = process.env.api_local
 
-let bot = new TelegramAPi(token, {
-    polling: true,
-});
 
 
-const connection = hanaClient.createConnection();
-connection.connect(conn_params, async (err) => {
-    if (err) {
-        console.error('Hanaga ulanishda xatolik yuz berdi:', err);
-    } else {
-        console.log('Hanaga ulanish muvaffaqiyatli amalga oshirildi');
-    }
-});
-global.connection = connection;
+
+let connectHana = () => {
+    const connection = hanaClient.createConnection();
+    connection.connect(conn_params, async (err) => {
+        if (err) {
+            console.error('Hanaga ulanishda xatolik yuz berdi:', err);
+        } else {
+            console.log('Hanaga ulanish muvaffaqiyatli amalga oshirildi');
+        }
+    });
+    global.connection = connection;
+}
 
 
 const connectDB = async () => {
@@ -59,7 +58,7 @@ const connectDB = async () => {
 
 
 
-module.exports = { bot, conn_params, db, connectDB, api_params, api }
+module.exports = { conn_params, db, connectDB, api_params, api, connectHana }
 
 
 

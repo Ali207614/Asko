@@ -37,6 +37,43 @@ class b1SL {
         });
     }
 
+    async proxyFunc(req, res) {
+        const { path } = req.params
+        delete req.headers.host
+        delete req.headers['content-length']
+        if (!path) {
+            return res.status(404).json({
+                "error": {
+                    "message": "Unrecognized resource path."
+                }
+            })
+        }
+
+        let cookie;
+        if (!req.headers?.info) {
+            cookie = req.headers
+        }
+        else {
+            cookie = { ...JSON.parse(req.headers?.info), ...req.headers }
+        }
+        return axios({
+            url: `https://${process.env.api}:50000` + req.originalUrl,
+            method: req.method,
+            data: req.body,
+            timeout: 90000,
+            headers: cookie,
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+        })
+            .then(({ data, headers }) => {
+                return res.status(200).json({ ...data, ...headers });
+            })
+            .catch(async (err) => {
+                return res.status(err?.response?.status)
+                    .json(err?.response?.data || err)
+            });
+    }
 }
 
 module.exports = new b1SL();
