@@ -24,7 +24,6 @@ class b1HANA {
 
     login = async (req, res, next) => {
         const { login, password } = req.body;
-        console.log(req.body)
         if (!login || !password) {
             return next(ApiError.BadRequest('Некорректный login или password'));
         }
@@ -50,9 +49,26 @@ class b1HANA {
         if (get(req, 'query.status', '') == 'false') {
             const totalDocuments = await Invoice.countDocuments({ U_branch: req.user.U_branch })
             if (totalDocuments) {
-                const invoices = await Invoice.find({ U_branch: req.user.U_branch })
-                    .skip(req.query.offset - 1)
-                    .limit(req.query.limit)
+                const search = req.query.search || "";
+                const offset = parseInt(req.query.offset, 10) || 0;
+                const limit = parseInt(req.query.limit, 10) || 10;
+
+                let searchQuery = { U_branch: req.user.U_branch };
+
+                if (search.trim().length) {
+                    searchQuery = {
+                        ...searchQuery,
+                        $or: [
+                            { CardName: { $regex: search, $options: "i" } },
+                            { Phone1: { $regex: search, $options: "i" } },
+                            { U_car: { $regex: search, $options: "i" } }
+                        ]
+                    };
+                }
+
+                const invoices = await Invoice.find(searchQuery)
+                    .skip(offset - 1)
+                    .limit(limit)
                     .lean();
                 return res.status(200).json([...invoices.map(item => {
                     return { ...item, LENGTH: totalDocuments }

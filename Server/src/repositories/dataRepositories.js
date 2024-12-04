@@ -18,7 +18,10 @@ class DataRepositories {
         let length = `SELECT SUM(1) FROM ${this.db}.OINV T0 WHERE T0."U_branch" = '${U_branch}' AND T0."CANCELED" = 'N' AND ( T0."DocStatus" = 'O' or T0."DocStatus" = 'C') AND T0${last30DaysFilter}`;
         return `
             SELECT (${length}) as length, 
+                    T2."Phone1",
+                    T2."Phone2",
                    T0."DocEntry", 
+                   T0."U_car", 
                    T0."DocNum", 
                    T0."DocType", 
                    T0."CANCELED", 
@@ -32,10 +35,11 @@ class DataRepositories {
                    T0."DocTotal", 
                    T0."PaidToDate", 
                    T0."SlpCode", 
-                   T0."U_branch" ,
+                   T2."U_branch" ,
                    T1."ItemCode", T1."Dscription", T1."Quantity", T1."Price", T1."DiscPrcnt", T1."LineTotal" 
             FROM ${this.db}.OINV T0 
             INNER JOIN ${this.db}.INV1 T1 ON T1."DocEntry" = T0."DocEntry"
+            INNER JOIN ${this.db}.OCRD T2 ON T0."CardCode" = T2."CardCode"
             WHERE T0."DocEntry" in  (
                     select 
                 A0."DocEntry" 

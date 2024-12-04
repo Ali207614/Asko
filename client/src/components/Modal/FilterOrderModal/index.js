@@ -121,14 +121,6 @@ const FilterOrderModal = ({ getRef, filterProperty, setFilterProperty, getOrders
                 </div>
               </div>
               <div className='filter-manager'>
-                <h3 className='filter-title'>Дата создания
-                </h3>
-                <div className='df align justify'>
-                  <input value={get(filterProperty, 'CreationDate.start')} onChange={(e) => setFilterProperty({ ...filterProperty, CreationDate: { ...get(filterProperty, 'CreationDate'), start: e.target.value } })} style={{ width: '48%' }} className='filter-inp' type="date" id='manager' />
-                  <input value={get(filterProperty, 'CreationDate.end')} onChange={(e) => setFilterProperty({ ...filterProperty, CreationDate: { ...get(filterProperty, 'CreationDate'), end: e.target.value } })} style={{ width: '48%' }} className='filter-inp' type="date" id='manager' />
-                </div>
-              </div>
-              <div className='filter-manager'>
                 <h3 className='filter-title'>Состояние</h3>
                 <div className='filter-wrapper df align'>
                   {
@@ -141,36 +133,6 @@ const FilterOrderModal = ({ getRef, filterProperty, setFilterProperty, getOrders
                       )
                     })
                   }
-                </div>
-              </div>
-              <div className='filter-manager'>
-                <h3 className='filter-title'>Склад</h3>
-                <div className='right-limit' style={{ width: "110px" }}>
-                  <button style={{ width: "110px" }} onClick={() => setShowDropdownWarehouse(!showDropDownWarehouse)} className={`right-dropdown`}>
-                    <p className='right-limit-text'>{get(filterProperty, 'WarehouseCode', '-') || '-'}</p>
-                    <img src={arrowDown} className={showDropDownWarehouse ? "up-arrow" : ""} alt="arrow-down-img" />
-                  </button>
-                  <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${(showDropDownWarehouse) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
-                    {
-                      ['-', ...warehouseList, 'B-X'].map((item, i) => {
-                        return (<li key={i} onClick={() => {
-                          if (item == '-') {
-                            setWarehouse(item);
-                            setShowDropdownWarehouse(false)
-                            setFilterProperty({ ...filterProperty, WarehouseCode: '' })
-                            return
-                          }
-                          if (warehouse != item) {
-                            setWarehouse(item);
-                            setShowDropdownWarehouse(false)
-                            setFilterProperty({ ...filterProperty, WarehouseCode: item })
-                            return
-                          }
-                          return
-                        }} className={`dropdown-li ${warehouse == item ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{item}</a></li>)
-                      })
-                    }
-                  </ul>
                 </div>
               </div>
             </div>
