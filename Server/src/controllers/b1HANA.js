@@ -46,33 +46,53 @@ class b1HANA {
     };
 
     invoices = async (req, res, next) => {
+        console.log(req.query)
         if (get(req, 'query.status', '') == 'false') {
             const totalDocuments = await Invoice.countDocuments({ U_branch: req.user.U_branch })
             if (totalDocuments) {
                 const search = req.query.search || "";
                 const offset = parseInt(req.query.offset, 10) || 0;
                 const limit = parseInt(req.query.limit, 10) || 10;
-
-                let searchQuery = { U_branch: req.user.U_branch };
+                const docDateStart = req.query?.docDateStart || null;
+                const docDateEnd = req.query?.docDateEnd || null;
+                const statusPay = req.query?.statusPay ? req.query?.statusPay.split(",").map(Number) : [];
+                const searchQuery = { U_branch: req.user.U_branch };
 
                 if (search.trim().length) {
-                    searchQuery = {
-                        ...searchQuery,
-                        $or: [
-                            { CardName: { $regex: search, $options: "i" } },
-                            { Phone1: { $regex: search, $options: "i" } },
-                            { U_car: { $regex: search, $options: "i" } }
-                        ]
-                    };
+                    searchQuery.$or = [
+                        { CardName: { $regex: search, $options: "i" } },
+                        { Phone1: { $regex: search, $options: "i" } },
+                        { U_car: { $regex: search, $options: "i" } }
+                    ];
+                }
+
+                if (docDateStart || docDateEnd) {
+                    searchQuery.DocDate = {};
+                    if (docDateStart) searchQuery.DocDate.$gte = new Date(docDateStart);
+                    if (docDateEnd) searchQuery.DocDate.$lte = new Date(docDateEnd);
+                }
+
+                if (statusPay.length) {
+                    searchQuery.$or = [
+                        ...(searchQuery.$or || []),
+                        ...(statusPay.includes(1) ? [{ $expr: { $and: [{ $gt: ["$DocTotal", 0] }, { $eq: ["$DocTotal", "$PaidToDate"] }] } }] : []),
+                        ...(statusPay.includes(2) ? [{ $expr: { $eq: ["$PaidToDate", 0] } }] : []),
+                        ...(statusPay.includes(3) ? [{ $expr: { $and: [{ $gt: ["$PaidToDate", 0] }, { $lt: ["$PaidToDate", "$DocTotal"] }] } }] : []),
+                    ];
                 }
 
                 const invoices = await Invoice.find(searchQuery)
                     .skip(offset - 1)
                     .limit(limit)
                     .lean();
-                return res.status(200).json([...invoices.map(item => {
-                    return { ...item, LENGTH: totalDocuments }
-                })])
+
+                const totalDocuments = await Invoice.countDocuments(searchQuery);
+
+                return res.status(200).json(invoices.map(item => ({
+                    ...item,
+                    LENGTH: totalDocuments,
+                })));
+
             }
         }
         const query = await DataRepositories.getInvoices(req.query, req.user);

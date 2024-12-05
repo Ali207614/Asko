@@ -45,17 +45,13 @@ const Home = () => {
     const [loading, setLoading] = useState(false)
     const [mainCheck, setMainCheck] = useState(false)
     const [mainData, setMainData] = useState([])
-    const [fnState, setFnState] = useState(false)
 
     const [filterProperty, setFilterProperty] = useState(get(getFilter, 'filterProperty', {}))
 
     const [updateLoading, setUpdateLoading] = useState(false)
-    const [updateLoadingAll, setUpdateLoadingAll] = useState(false)
 
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [dropdownOpenAll, setDropdownOpenAll] = useState(false);
     const [invoiceDropDown, setInvoiceDropDown] = useState(false);
-    const [filterData, setFilterData] = useState({})
     let [color, setColor] = useState("#3C3F47");
 
 
@@ -87,6 +83,7 @@ const Home = () => {
 
     useEffect(() => {
         dispatch(setFilter({ limit, ts, search, filterProperty, activeData }));
+        console.log(Object.values(filterProperty).flat())
     }, [limit, ts, search, filterProperty, activeData])
 
 
@@ -115,24 +112,18 @@ const Home = () => {
 
 
     const subQuery = (prop = {}) => {
-        let creationDateStart = get(prop, 'CreationDate.start', {})
-        let creationDateEnd = get(prop, 'CreationDate.end', {})
         let docDateStart = get(prop, 'DocDate.start', {})
         let docDateEnd = get(prop, 'DocDate.end', {})
-
-        let salesPerson = get(prop, 'SalesPerson', [])
-        let status = get(prop, 'Status', [])
-        let warehouseCode = get(prop, 'WarehouseCode', '')
-
+        let status = get(prop, 'status', [])
         let list = [
             { name: 'docDateStart', data: docDateStart },
             { name: 'docDateEnd', data: docDateEnd },
-            { name: 'status', data: status },
+            { name: 'statusPay', data: status },
         ].filter(item => get(item, 'data', '').length)
         return {
             link: list.map(item => {
                 return `&${get(item, 'name', '')}=${get(item, 'data', '')}`
-            }).join(''), status: list.length
+            }).join(''), status: status.length
         }
     }
 
@@ -179,7 +170,7 @@ const Home = () => {
 
 
     const filterOrders = () => {
-        filterRef.current?.open(filterData);
+        filterRef.current?.open(filterProperty, setFilterProperty);
     }
 
 
@@ -249,9 +240,9 @@ const Home = () => {
 
                                 <div style={{ position: 'relative' }}>
                                     {
-                                        (get(subQuery(filterProperty), 'status') && get(filterProperty, 'click')) ? (
+                                        (Object.values(filterProperty).flat().length) ? (
                                             <button onClick={() => {
-                                                setFilterProperty({ clear: true })
+                                                setFilterProperty({})
                                                 getOrders({ page: 1, limit, value: search })
                                                 setPage(1)
                                                 setTs(limit)
