@@ -113,6 +113,19 @@ class b1HANA {
         return res.status(200).json(newInvoices)
     };
 
+    updateList = (list, item, key) => {
+        const index = list.findIndex((el) => el.ListName === item.ListName);
+        if (index === -1) {
+            list.push(item);
+        } else {
+            list[index] = item;
+        }
+    };
+
+
+
+
+
     itemSchema = async (data) => {
         const existingItems = await Item.find({
             ItemCode: { $in: data.map((item) => item.ItemCode) },
@@ -223,20 +236,17 @@ class b1HANA {
 
 
     items = async (req, res, next) => {
-        // U_branch = 'A_SH01'
-        // req.user.U_branch = 'A_SH01'
         if (get(req, 'query.status', '') == 'false') {
             const totalDocuments = await Item.countDocuments({
-                "PriceList.ListNum": get(req, 'user.U_branch', '')
+                "PriceList.ListName": get(req, 'user.U_branch', '')
             })
             if (totalDocuments) {
                 const search = req.query.search || "";
                 const offset = parseInt(req.query.offset, 10) || 0;
                 const limit = parseInt(req.query.limit, 10) || 10;
                 const searchQuery = {
-                    "PriceList.ListNum": get(req, 'user.U_branch', '')
+                    "PriceList.ListName": get(req, 'user.U_branch', '')
                 };
-
 
                 if (search.trim().length) {
                     searchQuery.$or = [
@@ -271,27 +281,11 @@ class b1HANA {
         }
 
         if (get(req, 'query.status', '') == 'false') {
-            newItems = newItems
-                .slice(0, 10) // Birinchi 10 ta elementni olish
-                .map(item => {
-                    // insertOne yoki updateOne ichidagi document ni birlashtirish
-                    const document = {
-                        ...(item?.insertOne?.document || {}),
-                        ...(item?.updateOne?.document || {})
-                    };
-                    return document;
-                });
-        }
-        else {
-            newItems = newItems
-                .slice(0, 10) // Birinchi 10 ta elementni olish
-                .map(item => {
-                    const document = {
-                        ...(item?.insertOne?.document || {}),
-                        ...(item?.updateOne?.document || {})
-                    };
-                    return document;
-                });
+            newItems = newItems.slice(0, 10)
+            newItems = [
+                ...newItems.filter(item => item?.insertOne?.document).map(item => item.insertOne.document),
+                ...newItems.filter(item => item?.updateOne?.document).map(item => item.updateOne.document)
+            ]
         }
 
         return res.status(200).json(newItems)
