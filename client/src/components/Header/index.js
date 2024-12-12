@@ -32,17 +32,6 @@ const Header = () => {
                       Заказ
                     </NavLink>
                   </li>
-                  <li className='list-item'>
-                    <NavLink
-                      to="/return"
-                      className={() => {
-                        const isActive = location.pathname === '/return' || location.pathname.startsWith('/return-manage') || location.pathname.startsWith('/return-invoice');
-                        return `list-item-link ${isActive ? 'opacity-1' : ''}`;
-                      }}
-                    >
-                      Возврат
-                    </NavLink>
-                  </li>
                 </ul>
               </nav>
             </div>

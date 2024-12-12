@@ -6,6 +6,8 @@ const router = new Router();
 
 
 router.post('/api/login', b1HANA.login);
+
+router.get('/api/items', authMiddleware, b1HANA.items);
 router.get('/api/invoices', authMiddleware, b1HANA.invoices);
 
 // router.get('/b1s/v1/:path', b1SL.proxyFunc);
