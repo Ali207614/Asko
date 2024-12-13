@@ -239,38 +239,50 @@ class b1HANA {
         if (get(req, 'query.status', '') == 'false') {
             const totalDocuments = await Item.countDocuments({
                 "PriceList.ListName": get(req, 'user.U_branch', '')
-            })
+            });
+
             if (totalDocuments) {
-                const search = req.query.search || "";
+                const search = (req.query.search || "").toString().trim();
                 const offset = parseInt(req.query.offset, 10) || 0;
                 const limit = parseInt(req.query.limit, 10) || 10;
+                let items = req.query.items ? req.query.items.split(",").map(item => item.replace(/['"]/g, "").trim()) : [];
                 const searchQuery = {
                     "PriceList.ListName": get(req, 'user.U_branch', '')
                 };
 
-                if (search.trim().length) {
+                if (search.length) {
                     searchQuery.$or = [
                         { ItemName: { $regex: search, $options: "i" } },
+                        { ItemCode: { $regex: search, $options: "i" } },
                         { U_BRAND: { $regex: search, $options: "i" } },
                         { U_Measure: { $regex: search, $options: "i" } }
                     ];
                 }
 
-                const items = await Item.find(searchQuery)
+                if (items.length) {
+                    searchQuery.ItemCode = { $nin: items };
+                }
+
+                // Hujjatlarni olish
+                const documents = await Item.find(searchQuery)
                     .skip(offset - 1)
                     .limit(limit)
                     .lean();
 
-                const totalDocuments = await Item.countDocuments(searchQuery)
+                // Umumiy hujjat sonini hisoblash
+                const totalDocuments = await Item.countDocuments(searchQuery);
 
-                return res.status(200).json(items.map(item => ({
+                // Natijani qaytarish
+                return res.status(200).json(documents.map(item => ({
                     ...item,
                     LENGTH: totalDocuments,
+                    OnHand: get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', '')),
+                    PriceList: get(item, 'PriceList', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
                 })));
-
             }
         }
         const query = await DataRepositories.getItems(req.query, req.user);
+        console.log(query)
         let data = await this.execute(query);
         let newItems = []
         if (data.length) {
@@ -279,16 +291,23 @@ class b1HANA {
                 await Item.bulkWrite(newItems);
             }
         }
-
         if (get(req, 'query.status', '') == 'false') {
             newItems = newItems.slice(0, 10)
-            newItems = [
-                ...newItems.filter(item => item?.insertOne?.document).map(item => item.insertOne.document),
-                ...newItems.filter(item => item?.updateOne?.document).map(item => item.updateOne.document)
-            ]
         }
-
-        return res.status(200).json(newItems)
+        newItems = [
+            ...newItems.filter(item => item?.insertOne?.document).map(item => item.insertOne.document),
+            ...newItems.filter(item => item?.updateOne?.document).map(item => item.updateOne.document)
+        ]
+        if (get(req, 'query.status', '') == 'false') {
+            newItems = newItems.map(item => item.toObject());
+        }
+        return res.status(200).json(newItems.map(item => {
+            return {
+                ...item,
+                OnHand: get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', '')),
+                PriceList: get(item, 'PriceList', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
+            };
+        }));
     };
 
 }

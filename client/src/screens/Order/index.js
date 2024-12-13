@@ -245,10 +245,11 @@ const Order = () => {
       )
       .then(({ data }) => {
         setLoading(false)
-        setMainData(get(data, 'value', []).map(item => {
+
+        setMainData(data.map(item => {
           return { ...item, value: '', }
         }))
-        setAllPageLength(get(data, 'value[0].LENGTH', 0))
+        setAllPageLength(get(data, '[0].LENGTH', 0))
       })
       .catch(err => {
         setLoading(false)
@@ -479,41 +480,8 @@ const Order = () => {
   }
 
   const inputRefs = useRef([]);
-  const inputKarobkaRefs = useRef([]);
 
-  const handleKarobkaKeyDown = (event, index) => {
-    if (event.key === 'ArrowDown') {
-      event.preventDefault(); // ArrowDown tugmasining default harakatini to'xtatish
-      if (index < inputKarobkaRefs.current.length - 1) {
-        inputKarobkaRefs.current[index + 1].focus();
-        setTimeout(() => {
-          const nextInput = inputKarobkaRefs.current[index + 1];
-          if (nextInput.type === 'number') {
-            const value = nextInput.value; // Hozirgi qiymatini saqlab qo'yamiz
-            nextInput.type = 'text'; // Vaqtinchalik text turiga o'zgartirish
-            nextInput.setSelectionRange(value.length, value.length);
-            nextInput.type = 'number'; // Qayta number turiga o'zgartirish
-            nextInput.value = value; // Qiymatini qaytarish
-          }
-        }, 0);
-      }
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault(); // ArrowUp tugmasining default harakatini to'xtatish
-      if (index > 0) {
-        inputKarobkaRefs.current[index - 1].focus();
-        setTimeout(() => {
-          const prevInput = inputKarobkaRefs.current[index - 1];
-          if (prevInput.type === 'number') {
-            const value = prevInput.value; // Hozirgi qiymatini saqlab qo'yamiz
-            prevInput.type = 'text'; // Vaqtinchalik text turiga o'zgartirish
-            prevInput.setSelectionRange(value.length, value.length);
-            prevInput.type = 'number'; // Qayta number turiga o'zgartirish
-            prevInput.value = value; // Qiymatini qaytarish
-          }
-        }, 0);
-      }
-    }
-  };
+
 
   const handleKeyDown = (event, index) => {
     if (event.key === 'ArrowDown') {
@@ -752,13 +720,12 @@ const Order = () => {
                   <li className='table-head-item w-50'>
                     Код
                   </li>
-                  <li className='table-head-item w-50'>Продукция</li>
-                  {/* <li className='table-head-item w-70'>Модел</li> */}
-                  <li className='table-head-item w-50'>Куб / Brutto</li>
+                  <li className='table-head-item w-100'>Продукция</li>
+                  <li className='table-head-item w-50'>Бранд</li>
+                  <li className='table-head-item w-50'>Мера</li>
                   <li className='table-head-item w-50'>Цена</li>
                   <li className='table-head-item w-50'>Остаток</li>
                   <li className='table-head-item w-70'>Количество</li>
-                  <li className='table-head-item w-70'>В кейсе</li>
                   <li className='table-head-item w-47px'>
                     <button onClick={() => {
                       let filterData = mainData.filter(el => {
@@ -794,19 +761,29 @@ const Order = () => {
                                       {get(item, 'ItemCode', '')}
                                     </p>
                                   </div>
-                                  <div className='w-50 p-16' >
+                                  <div className='w-100 p-16' >
                                     <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                       {get(item, 'ItemName', '') || '-'}
                                     </p>
                                   </div>
                                   <div className='w-50 p-16' >
+                                    <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                      {get(item, 'U_BRAND', '') || '-'}
+                                    </p>
+                                  </div>
+                                  <div className='w-50 p-16' >
+                                    <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                      {get(item, 'U_Measure', '') || '-'}
+                                    </p>
+                                  </div>
+                                  <div className='w-50 p-16' >
                                     <p className='table-body-text 50'>
-                                      {formatterCurrency(Number(get(item, 'Price', 0)), get(item, 'Currency', "USD") || 'USD')}
+                                      {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), get(item, 'Currency', "USD") || 'USD')}
                                     </p>
                                   </div>
                                   <div className='w-50 p-16' >
                                     <p className='table-body-text '>
-                                      {Number(get(item, 'OnHand', ''))} / <span className='isCommited'>{Number(get(item, 'OnHand', '')) - Number(get(item, 'IsCommited', ''))}</span>
+                                      {Number(get(item, 'OnHand.OnHand', ''))} / <span className='isCommited'>{Number(get(item, 'OnHand.OnHand', '')) - Number(get(item, 'OnHand.IsCommited', ''))}</span>
                                     </p>
                                   </div>
                                   <div className='w-70 p-16' >
@@ -829,15 +806,15 @@ const Order = () => {
                                     <button
                                       disabled={
                                         (Number(get(item, 'value')) < 0) ? true : (
-                                          Number(get(item, 'OnHand', '')) <= 0
+                                          Number(get(item, 'OnHand.OnHand', '')) <= 0
                                             ? true :
-                                            (Number(get(item, 'OnHand', '')) - Number(get(item, 'IsCommited', ''))) <= 0 ||
-                                            (Number(get(item, 'OnHand', '')) - Number(get(item, 'IsCommited', ''))) < Number(get(item, 'value', 0)))
+                                            (Number(get(item, 'OnHand.OnHand', '')) - Number(get(item, 'OnHand.IsCommited', ''))) <= 0 ||
+                                            (Number(get(item, 'OnHand.OnHand', '')) - Number(get(item, 'OnHand.IsCommited', ''))) < Number(get(item, 'value', 0)))
                                       }
                                       onClick={() => addState(item)}
-                                      className={`table-body-text table-head-check-btn ${Number(get(item, 'OnHand', '')) <= 0 ? 'opacity-5' : (
-                                        (Number(get(item, 'OnHand', '')) - Number(get(item, 'IsCommited', ''))) <= 0 ||
-                                          (Number(get(item, 'OnHand', '')) - Number(get(item, 'IsCommited', ''))) < Number(get(item, 'value', 0)) ? 'opacity-5' : '')} ${Number(get(item, 'value')) < 0 ? 'opacity-5' : ''}`}>
+                                      className={`table-body-text table-head-check-btn ${Number(get(item, 'OnHand.OnHand', '')) <= 0 ? 'opacity-5' : (
+                                        (Number(get(item, 'OnHand.OnHand', '')) - Number(get(item, 'OnHand.IsCommited', ''))) <= 0 ||
+                                          (Number(get(item, 'OnHand.OnHand', '')) - Number(get(item, 'OnHand.IsCommited', ''))) < Number(get(item, 'value', 0)) ? 'opacity-5' : '')} ${Number(get(item, 'value')) < 0 ? 'opacity-5' : ''}`}>
                                       <img src={add} alt="add button" />
                                     </button>
                                   </div>

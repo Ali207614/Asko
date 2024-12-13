@@ -282,7 +282,7 @@ const Home = () => {
                                 </div>
 
 
-                                <button onClick={() => navigate('/order')} className='btn-head'>
+                                <button onClick={() => navigate('/invoice')} className='btn-head'>
                                     Добавить
                                 </button>
                             </div>

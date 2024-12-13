@@ -95,20 +95,63 @@ class DataRepositories {
         `;
     }
 
-    getItems({ offset = '1', limit = '1', status = 'false' }, { U_branch, SlpCode }) {
-        let pagination = status == 'true' ? ` LIMIT ${limit} 
-        OFFSET ${offset - 1}` : ''
+    getItems({ offset = '1', limit = '1', status = 'false', search = '', items = '' }, { U_branch, SlpCode }) {
+        let pagination = status == 'true' ? ` LIMIT ${limit} OFFSET ${offset - 1}` : '';
+
+        // Agar "items" bo'sh bo'lmasa, filter yaratamiz
+        let itemsFilter = items ? `AND T0."ItemCode" NOT IN (${items})` : '';
+
+        // Agar "search" bo'sh bo'lmasa, qidiruv shartini qo'shamiz
+        let searchFilter = search ? `AND (
+            LOWER(T0."ItemCode") LIKE LOWER('%${search}%') OR
+            LOWER(T0."ItemName") LIKE LOWER('%${search}%') OR
+            LOWER(T0."U_BRAND") LIKE LOWER('%${search}%') OR
+            LOWER(T0."U_Measure") LIKE LOWER('%${search}%')
+        )` : '';
 
         let lengthQuery = `
             SELECT COUNT(1) 
-            FROM ${this.db}.OITM  T0 INNER JOIN ${this.db}.OITW  T1 ON T0."ItemCode" = T1."ItemCode" INNER JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" INNER JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  WHERE T4."ListName"  = '${U_branch}' and T1."WhsCode" = '${U_branch}' 
+            FROM ${this.db}.OITM T0 
+            INNER JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
+            INNER JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
+            INNER JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+            WHERE T4."ListName" = '${U_branch}' 
+              AND T1."WhsCode" = '${U_branch}' 
+              ${itemsFilter} 
+              ${searchFilter}
         `;
+
         return `
-        SELECT (${lengthQuery}) as length,  T0."U_BRAND",T0."U_Measure", T0."PicturName", T0."ItmsGrpCod", T1."IsCommited", T1."OnHand", T1."OnOrder", T1."Counted", T0."ItemCode", T0."ItemName", T0."CodeBars", T1."AvgPrice", T4."ListName", T3."PriceList", T3."Price" , T3."Currency" FROM ${this.db}.OITM  T0 INNER JOIN ${this.db}.OITW  T1 ON T0."ItemCode" = T1."ItemCode" INNER JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" INNER JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  WHERE T4."ListName"  = '${U_branch}' and T1."WhsCode" = '${U_branch}' 
-        ORDER BY T0."ItemName"
-        ${pagination}
-    `;
+            SELECT (${lengthQuery}) as length,  
+                   T0."U_BRAND",
+                   T0."U_Measure", 
+                   T0."PicturName", 
+                   T0."ItmsGrpCod", 
+                   T1."IsCommited", 
+                   T1."OnHand", 
+                   T1."OnOrder", 
+                   T1."Counted", 
+                   T0."ItemCode", 
+                   T0."ItemName", 
+                   T0."CodeBars", 
+                   T1."AvgPrice", 
+                   T4."ListName", 
+                   T3."PriceList", 
+                   T3."Price", 
+                   T3."Currency" 
+            FROM ${this.db}.OITM T0 
+            INNER JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
+            INNER JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
+            INNER JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+            WHERE T4."ListName" = '${U_branch}' 
+              AND T1."WhsCode" = '${U_branch}' 
+              ${itemsFilter} 
+              ${searchFilter} 
+            ORDER BY T0."ItemName"
+            ${pagination}
+        `;
     }
+
 }
 
 module.exports = new DataRepositories(db);
