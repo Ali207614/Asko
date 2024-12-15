@@ -152,6 +152,25 @@ class DataRepositories {
         `;
     }
 
+    getItemGroups() {
+        let sql = `
+        SELECT  T1."Discount", T0."ItmsGrpCod", T0."ItmsGrpNam" FROM ${this.db}.OITB T0 inner join  ${this.db}.EDG1 T1 on T1."ObjKey" = T0."ItmsGrpCod" 
+        `
+        return sql
+    }
+
+    getAllBusinessPartners() {
+        let sql = `
+        SELECT T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0 WHERE T0."CardType" ='C'`
+        return sql
+    }
+
+    getCars({ cardCode = '' }) {
+        let sql = `
+        SELECT T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" FROM ${this.db}."@CARCODE"  T0 where "U_bp_code" = '${cardCode}'`
+        return sql
+    }
+
 }
 
 module.exports = new DataRepositories(db);

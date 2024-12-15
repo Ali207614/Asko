@@ -11,7 +11,9 @@ import ConfirmModalOrder from "./ConfirmModalOrder"
 import FilterOrderModal from './FilterOrderModal'
 import FilterModal from './FilterModal'
 import FilterModalResizable from './FilterModalResizable';
+import BusinessPartner from './BusinessPartner';
 export {
+  BusinessPartner,
   SuccessModal,
   ErrorModal,
   ChangeDate,

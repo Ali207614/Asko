@@ -37,7 +37,8 @@ const Resizable = ({
     filterPropertyResize,
     setFilterPropertyResize,
     filterData,
-    customerDataInvoice
+    customerDataInvoice,
+    groups
 }) => {
     let limitList = [1, 10, 50, 100, 500, 1000];
     const [height, setHeight] = useState(100);
@@ -103,17 +104,19 @@ const Resizable = ({
         setIsEmpty(false);
     };
 
-    const changeKarobka = (value, itemCode) => {
+
+    const changeDiscount = (value, itemCode) => {
         let indexAct = actualData.findIndex(el => get(el, 'ItemCode', '') === itemCode);
         let indexState = state.findIndex(el => get(el, 'ItemCode', '') === itemCode);
         if (indexAct >= 0) {
-            actualData[indexAct].karobka = value;
+            actualData[indexAct].Discount = value;
             setActualData([...actualData]);
         }
         if (indexState >= 0) {
-            state[indexState].karobka = value;
+            state[indexState].Discount = value;
             setState([...state]);
         }
+        setIsEmpty(false);
     };
 
     useEffect(() => {
@@ -229,19 +232,9 @@ const Resizable = ({
                                                 {
 
                                                     (state.length ? formatterCurrency(
-                                                        state.reduce((a, b) => a + ((Number(get(b, 'Price', 0)) * Number(get(b, 'value', 0))) - (Number(get(b, 'Price', 0)) * Number(get(b, 'value', 0)) * Number(get(b, 'Discount', 0)) / 100)), 0)
+                                                        state.reduce((a, b) => a + ((Number(get(b, 'PriceList.Price', 0)) * Number(get(b, 'value', 1))) - (Number(get(b, 'Price', 1)) * Number(get(b, 'value', 0)) * Number(get(b, 'Discount', 1)) / 100)), 0)
                                                         , "USD") : 0)
                                                 }</span></p>
-                                        </div>
-                                        <div className='footer-block'>
-                                            <p className='footer-text'>Куб : <span className='footer-text-spn'>{
-                                                parseFloat((state.length ? state.reduce((a, b) => a + (Number(get(b, 'BVolume', 0) || 0) * Number(get(b, 'value', 0) || 0)), 0) : 0).toFixed(4))
-                                            }</span></p>
-                                        </div>
-                                        <div className='footer-block'>
-                                            <p className='footer-text'>Брутто : <span className='footer-text-spn'>{
-                                                parseFloat((state.length ? parseFloat(state.reduce((a, b) => a + (Number(get(b, 'U_U_brutto', 0) || 0) * Number(get(b, 'value', 0) || 0)), 0)) : 0).toFixed(4))
-                                            }</span></p>
                                         </div>
                                     </div>
 
@@ -312,14 +305,13 @@ const Resizable = ({
                                     <div className='table-head'>
                                         <ul className='table-head-list d-flex align justify'>
                                             <li className='table-head-item w-50'>Код</li>
-                                            <li className='table-head-item'>Продукция / Производитель</li>
-                                            <li className='table-head-item w-50'>Модел</li>
-                                            <li className='table-head-item w-70'>Куб / Brutto</li>
+                                            <li className='table-head-item w-100'>Продукция</li>
+                                            <li className='table-head-item w-50'>Бранд</li>
+                                            <li className='table-head-item w-50'>Мера</li>
                                             <li className='table-head-item w-50'>Цена</li>
                                             <li className='table-head-item w-50'>Остаток</li>
-                                            <li className='table-head-item w-50'>Скидка</li>
-                                            <li className='table-head-item'>Количество</li>
-                                            <li className='table-head-item'>В кейсе</li>
+                                            <li className='table-head-item w-70'>Количество</li>
+                                            <li className='table-head-item w-70'>Скидка</li>
                                             <li className='table-head-item w-47px'>
                                                 <button onClick={() => {
                                                     setMainData([...state.map(item => {
@@ -344,39 +336,36 @@ const Resizable = ({
                                                 <li key={i} className='table-body-item'>
                                                     <div className='table-item-head d-flex align justify'>
                                                         <div className='w-50 p-16'>
-                                                            <p className='table-body-text'>{get(item, 'ItemCode', '')}</p>
+                                                            <p className='table-body-text' >
+                                                                {get(item, 'ItemCode', '')}
+                                                            </p>
                                                         </div>
-                                                        <div className='w-100 p-16'>
-                                                            <p style={{ width: '190px' }} className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                                        <div className='w-100 p-16' >
+                                                            <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                                                 {get(item, 'ItemName', '') || '-'}
                                                             </p>
                                                         </div>
-                                                        <div className='w-50 p-16'>
-                                                            <p style={{ width: '100px' }} className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
-                                                                {get(item, 'U_model', '-') || '-'}
+                                                        <div className='w-50 p-16' >
+                                                            <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                                                {get(item, 'U_BRAND', '') || '-'}
+                                                            </p>
+                                                        </div>
+                                                        <div className='w-50 p-16' >
+                                                            <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                                                {get(item, 'U_Measure', '') || '-'}
+                                                            </p>
+                                                        </div>
+                                                        <div className='w-50 p-16' >
+                                                            <p className='table-body-text 50'>
+                                                                {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), get(item, 'Currency', "USD") || 'USD')}
+                                                            </p>
+                                                        </div>
+                                                        <div className='w-50 p-16' >
+                                                            <p className='table-body-text '>
+                                                                {Number(get(item, 'OnHand.OnHand', ''))} / <span className='isCommited'>{Number(get(item, 'OnHand.OnHand', '')) - Number(get(item, 'OnHand.IsCommited', ''))}</span>
                                                             </p>
                                                         </div>
                                                         <div className='w-70 p-16'>
-                                                            <p className='table-body-text ' >
-                                                                {Number(get(item, 'BVolume', '-')) || '-'} / {Number(get(item, 'U_U_brutto', '-')) || '-'}
-                                                            </p>
-                                                        </div>
-                                                        <div className='w-50 p-16'>
-                                                            <p className='table-body-text'>
-                                                                {formatterCurrency(Number(get(item, 'Price', 0)), get(item, 'Currency', "USD") || 'USD')}
-                                                            </p>
-                                                        </div>
-                                                        <div className='w-50 p-16'>
-                                                            <p className='table-body-text'>
-                                                                {Number(get(item, 'OnHand', ''))} / <span className='isCommited'>{Number(get(item, 'OnHand', '')) - Number(get(item, 'IsCommited', ''))}</span>
-                                                            </p>
-                                                        </div>
-                                                        <div className='w-50 p-16'>
-                                                            <p className='table-body-text'>
-                                                                -{Number(get(item, 'Discount', 0))} %
-                                                            </p>
-                                                        </div>
-                                                        <div className='w-100 p-16'>
                                                             <p className='table-body-text'>
                                                                 <input
                                                                     ref={(el) => (inputRefs.current[i] = el)}
@@ -385,8 +374,6 @@ const Resizable = ({
                                                                     onChange={e => {
                                                                         if (/^\d*$/.test(e.target.value)) {
                                                                             changeValue(e.target.value, get(item, 'ItemCode', ''));
-                                                                            changeKarobka((e.target.value ? (Math.floor(e.target.value / Number(get(item, 'U_Karobka', 1) || 1))).toString() : ''), get(item, 'ItemCode', ''));
-
                                                                         }
                                                                     }}
                                                                     type="text"
@@ -394,21 +381,20 @@ const Resizable = ({
                                                                     placeholder='-' />
                                                             </p>
                                                         </div>
-                                                        <div className='w-100 p-16'>
+                                                        <div className='w-70 p-16'>
                                                             <p className='table-body-text'>
                                                                 <input
-                                                                    ref={(el) => (inputKarobkaRefs.current[i] = el)}
-                                                                    onKeyDown={(event) => handleKarobkaKeyDown(event, i)}
-                                                                    value={get(item, 'karobka', '')}
+                                                                    ref={(el) => (inputRefs.current[i] = el)}
+                                                                    onKeyDown={(event) => handleKeyDown(event, i)}
+                                                                    value={get(item, 'Discount', '')}
                                                                     onChange={e => {
                                                                         if (/^\d*$/.test(e.target.value)) {
-                                                                            changeKarobka(e.target.value, get(item, 'ItemCode', ''));
-                                                                            changeValue((e.target.value ? ((e.target.value || 1) * Number(get(item, 'U_Karobka', 1) || 1)).toString() : ''), get(item, 'ItemCode', ''));
+                                                                            changeDiscount(e.target.value, get(item, 'ItemCode', ''));
                                                                         }
                                                                     }}
                                                                     type="text"
-                                                                    className='table-body-inp bg-white'
-                                                                    placeholder={`${Number(get(item, 'U_Karobka', 1) || 1)} / кор`} />
+                                                                    className={`table-body-inp bg-white ${(isEmpty && item?.value.length === 0) ? 'borderRed' : ''}`}
+                                                                    placeholder='-' />
                                                             </p>
                                                         </div>
                                                         <div className='w-47px p-16'>
@@ -447,6 +433,7 @@ const Resizable = ({
                 state={state}
                 setState={setState}
                 search={search}
+                groups={groups}
             />
         </Style>
     );

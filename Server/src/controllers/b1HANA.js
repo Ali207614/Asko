@@ -9,6 +9,8 @@ const DataRepositories = require("../repositories/dataRepositories");
 const ApiError = require("../exceptions/api-error");
 const Invoice = require("../models/Invoice");
 const Item = require("../models/Item");
+const ItemGroup = require("../models/ItemGroup");
+const BusinessPartner = require("../models/BusinessPartner");
 require('dotenv').config();
 
 
@@ -47,70 +49,75 @@ class b1HANA {
     };
 
     invoices = async (req, res, next) => {
-        if (get(req, 'query.status', '') == 'false') {
-            const totalDocuments = await Invoice.countDocuments({ U_branch: req.user.U_branch })
-            if (totalDocuments) {
-                const search = req.query.search || "";
-                const offset = parseInt(req.query.offset, 10) || 0;
-                const limit = parseInt(req.query.limit, 10) || 10;
-                const docDateStart = req.query?.docDateStart || null;
-                const docDateEnd = req.query?.docDateEnd || null;
-                const statusPay = req.query?.statusPay ? req.query?.statusPay.split(",").map(Number) : [];
-                const searchQuery = { U_branch: req.user.U_branch };
-
-                if (search.trim().length) {
-                    searchQuery.$or = [
-                        { CardName: { $regex: search, $options: "i" } },
-                        { Phone1: { $regex: search, $options: "i" } },
-                        { U_car: { $regex: search, $options: "i" } }
-                    ];
-                }
-
-                if (docDateStart || docDateEnd) {
-                    searchQuery.DocDate = {};
-                    if (docDateStart) searchQuery.DocDate.$gte = new Date(docDateStart);
-                    if (docDateEnd) searchQuery.DocDate.$lte = new Date(docDateEnd);
-                }
-
-                if (statusPay.length) {
-                    searchQuery.$or = [
-                        ...(searchQuery.$or || []),
-                        ...(statusPay.includes(1) ? [{ $expr: { $and: [{ $gt: ["$DocTotal", 0] }, { $eq: ["$DocTotal", "$PaidToDate"] }] } }] : []),
-                        ...(statusPay.includes(2) ? [{ $expr: { $eq: ["$PaidToDate", 0] } }] : []),
-                        ...(statusPay.includes(3) ? [{ $expr: { $and: [{ $gt: ["$PaidToDate", 0] }, { $lt: ["$PaidToDate", "$DocTotal"] }] } }] : []),
-                    ];
-                }
-
-                const invoices = await Invoice.find(searchQuery)
-                    .skip(offset - 1)
-                    .limit(limit)
-                    .lean();
-
-                const totalDocuments = await Invoice.countDocuments(searchQuery);
-
-                return res.status(200).json(invoices.map(item => ({
-                    ...item,
-                    LENGTH: totalDocuments,
-                })));
-
-            }
-        }
-        const query = await DataRepositories.getInvoices(req.query, req.user);
-        let data = await this.execute(query);
-        let newInvoices = []
-        if (data.length) {
-            let docs = [...new Set(data.map(item => item.DocEntry))]
-            let mapped = docs.map(item => {
-                return { ...data.find(el => el.DocEntry == item), Items: data.filter(el => el.DocEntry == item) }
-            })
+        try {
             if (get(req, 'query.status', '') == 'false') {
-                newInvoices = await Invoice.insertMany(mapped);
+                const totalDocuments = await Invoice.countDocuments({ U_branch: req.user.U_branch })
+                if (totalDocuments) {
+                    const search = req.query.search || "";
+                    const offset = parseInt(req.query.offset, 10) || 0;
+                    const limit = parseInt(req.query.limit, 10) || 10;
+                    const docDateStart = req.query?.docDateStart || null;
+                    const docDateEnd = req.query?.docDateEnd || null;
+                    const statusPay = req.query?.statusPay ? req.query?.statusPay.split(",").map(Number) : [];
+                    const searchQuery = { U_branch: req.user.U_branch };
+
+                    if (search.trim().length) {
+                        searchQuery.$or = [
+                            { CardName: { $regex: search, $options: "i" } },
+                            { Phone1: { $regex: search, $options: "i" } },
+                            { U_car: { $regex: search, $options: "i" } }
+                        ];
+                    }
+
+                    if (docDateStart || docDateEnd) {
+                        searchQuery.DocDate = {};
+                        if (docDateStart) searchQuery.DocDate.$gte = new Date(docDateStart);
+                        if (docDateEnd) searchQuery.DocDate.$lte = new Date(docDateEnd);
+                    }
+
+                    if (statusPay.length) {
+                        searchQuery.$or = [
+                            ...(searchQuery.$or || []),
+                            ...(statusPay.includes(1) ? [{ $expr: { $and: [{ $gt: ["$DocTotal", 0] }, { $eq: ["$DocTotal", "$PaidToDate"] }] } }] : []),
+                            ...(statusPay.includes(2) ? [{ $expr: { $eq: ["$PaidToDate", 0] } }] : []),
+                            ...(statusPay.includes(3) ? [{ $expr: { $and: [{ $gt: ["$PaidToDate", 0] }, { $lt: ["$PaidToDate", "$DocTotal"] }] } }] : []),
+                        ];
+                    }
+
+                    const invoices = await Invoice.find(searchQuery)
+                        .skip(offset - 1)
+                        .limit(limit)
+                        .lean();
+
+                    const totalDocuments = await Invoice.countDocuments(searchQuery);
+
+                    return res.status(200).json(invoices.map(item => ({
+                        ...item,
+                        LENGTH: totalDocuments,
+                    })));
+
+                }
             }
-            else {
-                newInvoices = mapped
+            const query = await DataRepositories.getInvoices(req.query, req.user);
+            let data = await this.execute(query);
+            let newInvoices = []
+            if (data.length) {
+                let docs = [...new Set(data.map(item => item.DocEntry))]
+                let mapped = docs.map(item => {
+                    return { ...data.find(el => el.DocEntry == item), Items: data.filter(el => el.DocEntry == item) }
+                })
+                if (get(req, 'query.status', '') == 'false') {
+                    newInvoices = await Invoice.insertMany(mapped);
+                }
+                else {
+                    newInvoices = mapped
+                }
             }
+            return res.status(200).json(newInvoices)
         }
-        return res.status(200).json(newInvoices)
+        catch (error) {
+            next(error); // Xatolikni middleware orqali qaytarish
+        }
     };
 
     updateList = (list, item, key) => {
@@ -121,10 +128,6 @@ class b1HANA {
             list[index] = item;
         }
     };
-
-
-
-
 
     itemSchema = async (data) => {
         const existingItems = await Item.find({
@@ -234,81 +237,193 @@ class b1HANA {
         return bulkOps.filter((op) => op !== null);
     }
 
-
     items = async (req, res, next) => {
-        if (get(req, 'query.status', '') == 'false') {
-            const totalDocuments = await Item.countDocuments({
-                "PriceList.ListName": get(req, 'user.U_branch', '')
-            });
-
-            if (totalDocuments) {
-                const search = (req.query.search || "").toString().trim();
-                const offset = parseInt(req.query.offset, 10) || 0;
-                const limit = parseInt(req.query.limit, 10) || 10;
-                let items = req.query.items ? req.query.items.split(",").map(item => item.replace(/['"]/g, "").trim()) : [];
-                const searchQuery = {
+        try {
+            if (get(req, 'query.status', '') == 'false') {
+                const totalDocuments = await Item.countDocuments({
                     "PriceList.ListName": get(req, 'user.U_branch', '')
-                };
+                });
 
-                if (search.length) {
-                    searchQuery.$or = [
-                        { ItemName: { $regex: search, $options: "i" } },
-                        { ItemCode: { $regex: search, $options: "i" } },
-                        { U_BRAND: { $regex: search, $options: "i" } },
-                        { U_Measure: { $regex: search, $options: "i" } }
-                    ];
+                if (totalDocuments) {
+                    const search = (req.query.search || "").toString().trim();
+                    const offset = parseInt(req.query.offset, 10) || 0;
+                    const limit = parseInt(req.query.limit, 10) || 10;
+                    const groupCode = req.query?.code || '';
+                    let items = req.query.items ? req.query.items.split(",").map(item => item.replace(/['"]/g, "").trim()) : [];
+                    const searchQuery = {
+                        "PriceList.ListName": get(req, 'user.U_branch', '')
+                    };
+                    if (search.length) {
+                        searchQuery.$or = [
+                            { ItemName: { $regex: search, $options: "i" } },
+                            { ItemCode: { $regex: search, $options: "i" } },
+                            { U_BRAND: { $regex: search, $options: "i" } },
+                            { U_Measure: { $regex: search, $options: "i" } }
+                        ];
+                    }
+
+                    if (items.length) {
+                        searchQuery.ItemCode = { $nin: items };
+                    }
+
+                    if (groupCode) {
+                        searchQuery.ItmsGrpCod = groupCode;
+                    }
+
+
+                    // Hujjatlarni olish
+                    const documents = await Item.find(searchQuery)
+                        .skip(offset - 1)
+                        .limit(limit)
+                        .lean();
+
+                    // Umumiy hujjat sonini hisoblash
+                    const totalDocuments = await Item.countDocuments(searchQuery);
+
+                    // Natijani qaytarish
+                    return res.status(200).json(documents.map(item => ({
+                        ...item,
+                        LENGTH: totalDocuments,
+                        OnHand: get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', '')),
+                        PriceList: get(item, 'PriceList', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
+                    })));
                 }
-
-                if (items.length) {
-                    searchQuery.ItemCode = { $nin: items };
+            }
+            const query = await DataRepositories.getItems(req.query, req.user);
+            let data = await this.execute(query);
+            let newItems = []
+            if (data.length) {
+                newItems = await this.itemSchema(data)
+                if (newItems.length > 0) {
+                    await Item.bulkWrite(newItems);
                 }
-
-                // Hujjatlarni olish
-                const documents = await Item.find(searchQuery)
-                    .skip(offset - 1)
-                    .limit(limit)
-                    .lean();
-
-                // Umumiy hujjat sonini hisoblash
-                const totalDocuments = await Item.countDocuments(searchQuery);
-
-                // Natijani qaytarish
-                return res.status(200).json(documents.map(item => ({
+            }
+            if (get(req, 'query.status', '') == 'false') {
+                newItems = newItems.slice(0, 10)
+            }
+            newItems = [
+                ...newItems.filter(item => item?.insertOne?.document).map(item => item.insertOne.document),
+                ...newItems.filter(item => item?.updateOne?.document).map(item => item.updateOne.document)
+            ]
+            if (get(req, 'query.status', '') == 'false') {
+                newItems = newItems.map(item => item.toObject());
+            }
+            return res.status(200).json(newItems.map(item => {
+                return {
                     ...item,
-                    LENGTH: totalDocuments,
                     OnHand: get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', '')),
                     PriceList: get(item, 'PriceList', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
-                })));
-            }
+                };
+            }));
         }
-        const query = await DataRepositories.getItems(req.query, req.user);
-        console.log(query)
-        let data = await this.execute(query);
-        let newItems = []
-        if (data.length) {
-            newItems = await this.itemSchema(data)
-            if (newItems.length > 0) {
-                await Item.bulkWrite(newItems);
-            }
+        catch (error) {
+            next(error); // Xatolikni middleware orqali qaytarish
         }
-        if (get(req, 'query.status', '') == 'false') {
-            newItems = newItems.slice(0, 10)
-        }
-        newItems = [
-            ...newItems.filter(item => item?.insertOne?.document).map(item => item.insertOne.document),
-            ...newItems.filter(item => item?.updateOne?.document).map(item => item.updateOne.document)
-        ]
-        if (get(req, 'query.status', '') == 'false') {
-            newItems = newItems.map(item => item.toObject());
-        }
-        return res.status(200).json(newItems.map(item => {
-            return {
-                ...item,
-                OnHand: get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', '')),
-                PriceList: get(item, 'PriceList', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
-            };
-        }));
     };
+
+    groups = async (req, res, next) => {
+        try {
+            const group = await ItemGroup.find();
+            if (group.length > 0) {
+                return res.status(200).json(group);
+            }
+            const query = await DataRepositories.getItemGroups();
+            let data = await this.execute(query);
+            await ItemGroup.insertMany(data);
+            return res.status(200).json(data);
+        }
+        catch (error) {
+            next(error); // Xatolikni middleware orqali qaytarish
+        }
+    }
+
+    businessPartners = async (req, res, next) => {
+        try {
+            const search = (req.query.search || "").toString().trim();
+
+            // Query uchun default object
+            const searchQuery = {};
+            if (search.length) {
+                searchQuery.$or = [
+                    { CardCode: { $regex: search, $options: "i" } },
+                    { CardName: { $regex: search, $options: "i" } },
+                    { Phone1: { $regex: search, $options: "i" } },
+                    { Phone2: { $regex: search, $options: "i" } }
+                ];
+            }
+
+            // Kolleksiyada ma'lumotlar mavjudligini tekshirish
+            const bpExists = await BusinessPartner.estimatedDocumentCount();
+            if (bpExists > 0) {
+                const result = await BusinessPartner.find(searchQuery);
+                return res.status(200).json(result);
+            }
+
+            // Agar kolleksiyada ma'lumot bo'lmasa, yangi ma'lumotlarni yuklash
+            const query = await DataRepositories.getAllBusinessPartners();
+            const data = await this.execute(query);
+            console.log
+
+            // Yangi ma'lumotlarni bazaga saqlash
+            await BusinessPartner.insertMany(data);
+
+            // Agar qidiruv bo'lsa, ma'lumotni filter qilish
+            if (search.length && data.length) {
+                const filteredData = data.filter(item =>
+                    item.CardCode.toLowerCase().includes(search) ||
+                    (get(item, 'CardName', '') || '').toLowerCase().includes(search) ||
+                    (get(item, 'Phone1', '') || '').toLowerCase().includes(search) ||
+                    (get(item, 'Phone2', '') || '').toLowerCase().includes(search)
+                );
+                return res.status(200).json(filteredData);
+            }
+
+            return res.status(200).json(data);
+        } catch (error) {
+            console.log(error)
+            next(error); // Xatolikni middleware orqali qaytarish
+        }
+    };
+    getCars = async (req, res, next) => {
+        try {
+            // `CardCode` ni `req.query` dan olish
+            const cardCode = req.query.cardCode;
+
+            if (!cardCode) {
+                return res.status(400).json({ message: "CardCode is required" });
+            }
+
+            // MongoDB'dan `BusinessPartner`ni olish
+            const businessPartner = await BusinessPartner.findOne({ CardCode: cardCode });
+
+            if (!businessPartner) {
+                return res.status(404).json({ message: "BusinessPartner not found" });
+            }
+
+            // `cars` arrayini tekshirish
+            if (businessPartner.Cars && businessPartner.Cars.length > 0) {
+                return res.status(200).json(businessPartner.Cars); // Avvaldan mavjud `cars` qaytariladi
+            }
+
+            // SQL orqali mashinalarni olish
+            const query = await DataRepositories.getCars({ cardCode }); // SQL uchun kerakli so'rov
+            const carsFromSQL = await this.execute(query);
+            if (!carsFromSQL || carsFromSQL.length === 0) {
+                return res.status(200).json([]);
+            }
+
+            // MongoDB'dagi `cars` arrayini yangilash
+            businessPartner.Cars = carsFromSQL;
+            await businessPartner.save();
+
+            // Yangilangan `cars` arrayini qaytarish
+            return res.status(200).json(carsFromSQL);
+        } catch (error) {
+            console.log(error)
+            next(error); // Xatolarni qayta ishlash
+        }
+    };
+
 
 }
 

@@ -15,7 +15,7 @@ import { get, isNumber } from 'lodash';
 import formatterCurrency from '../../helpers/currency';
 import { FadeLoader } from "react-spinners";
 import LazyLoad from "react-lazyload";
-import { ErrorModal, ConfirmModal, FilterModal, FilterModalResizable, WarningModal } from '../../components/Modal';
+import { ErrorModal, ConfirmModal, FilterModal, FilterModalResizable, WarningModal, BusinessPartner } from '../../components/Modal';
 import { Spinner } from '../../components';
 import { useSelector } from 'react-redux';
 import { FixedSizeList as List } from 'react-window';
@@ -25,6 +25,7 @@ import { limitList, statuses, warehouseList, errorNotify, warningNotify, success
 import 'react-resizable/css/styles.css';
 import Resizable from './Resizable';
 import moment from 'moment';
+import rightButton from '../../assets/images/right.svg';
 
 let url = process.env.REACT_APP_API_URL
 
@@ -86,6 +87,8 @@ const Order = () => {
   const [logist, setLogist] = useState()
 
   const [filterData, setFilterData] = useState([])
+  const [cars, setCars] = useState([])
+  const [groups, setGroups] = useState([])
 
   const [filterProperty, setFilterProperty] = useState({})
   const [filterPropertyResize, setFilterPropertyResize] = useState({})
@@ -95,9 +98,12 @@ const Order = () => {
   const confirmRef = useRef();
 
   const filterRef = useRef();
+  const businessPartner = useRef();
 
 
-
+  const BusinessPartnerModalRef = useCallback(ref => {
+    businessPartner.current = ref;
+  }, []);
 
   const filterModalRef = useCallback(ref => {
     filterRef.current = ref;
@@ -118,6 +124,7 @@ const Order = () => {
   const filterOrders = () => {
     filterRef.current?.open(filterData);
   }
+
 
 
 
@@ -154,6 +161,7 @@ const Order = () => {
     }
     else {
       setCustomerData([])
+      setCustomerDataInvoice({})
     }
     return () => {
       clearTimeout(timeoutId);
@@ -168,11 +176,16 @@ const Order = () => {
   const getCustomer = (customerDataObj) => {
     axios
       .get(
-        url + `/api/customer?search=${get(customerDataObj, 'customer', '').toLowerCase()}`,
+        url + `/api/business-partner?search=${get(customerDataObj, 'customer', '').toLowerCase()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
       )
       .then(({ data }) => {
         setCustomerData(
-          get(data, 'value', [])
+          data
         )
       })
       .catch(err => {
@@ -181,6 +194,28 @@ const Order = () => {
 
     return;
   };
+
+  const getCars = (cardCode) => {
+    axios
+      .get(
+        url + `/api/cars?cardCode=${cardCode}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
+      )
+      .then(({ data }) => {
+        setCustomerDataInvoice({ ...customerDataInvoice, Cars: data })
+      })
+      .catch(err => {
+        errorNotify("Mijozlarni yuklashda muommo yuzaga keldi")
+      });
+
+    return;
+  };
+
+
 
   const getOrderByDocEntry = (doc) => {
     let link = get(docEntry, 'draft') ? `/api/draft/${doc}` : `/api/order?docEntry=${doc}`
@@ -247,12 +282,35 @@ const Order = () => {
         setLoading(false)
 
         setMainData(data.map(item => {
-          return { ...item, value: '', }
+          return { ...item, value: '', Discount: '' }
         }))
         setAllPageLength(get(data, '[0].LENGTH', 0))
+        if (groups.length == 0) {
+          getGroups()
+        }
       })
       .catch(err => {
         setLoading(false)
+        errorNotify("Tovarlarni yuklashda muommo yuzaga keldi")
+      });
+
+    return;
+  };
+
+  function getGroups() {
+    axios
+      .get(
+        url + `/api/group`,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
+      )
+      .then(({ data }) => {
+        setGroups(data)
+      })
+      .catch(err => {
         errorNotify("Tovarlarni yuklashda muommo yuzaga keldi")
       });
 
@@ -527,7 +585,6 @@ const Order = () => {
         <Layout>
           <div className='container'>
             <div className="order-head">
-
               <div className="order-main d-flex align justify">
                 <div className='d-flex align'>
                   <button onClick={() => navigate('/home')} className='btn-back'>Назад</button>
@@ -538,6 +595,13 @@ const Order = () => {
                 </button>
               </div>
               <div className="order-head-data d-flex align justify">
+                <div style={{ width: "10%" }}>
+                  <button onClick={() => {
+                    businessPartner.current?.open(setCustomerDataInvoice,customerDataInvoice);
+                  }} className='btn-businesPartner'>
+                    <img width={20} height={20} src={rightButton} alt="link-busines-partner" />
+                  </button>
+                </div>
                 <div className='w-100 position-relative' >
                   <input onChange={(e) => {
                     setCustomer(e.target.value)
@@ -551,6 +615,7 @@ const Order = () => {
                           setCustomerCode(get(customerItem, 'CardCode', ''))
                           setCustomerDataInvoice(customerData.find(e => get(e, 'CardCode', '') == get(customerItem, 'CardCode', '')))
                           setCustomerData([])
+                          getCars(get(customerItem, 'CardCode', ''))
                         }} key={i} className={`dropdown-li`}><a className="dropdown-item" href="#">
                             {get(customerItem, 'CardCode', '') || '-'} - {get(customerItem, 'CardName', '') || '-'}
                           </a></li>
@@ -568,9 +633,7 @@ const Order = () => {
                 <div className='w-70'>
                   <input type="text" value={comment} onChange={(e) => setComment(e.target.value)} className='order-inp' placeholder='Комментарий' />
                 </div>
-                <div className='w-70'>
-                  <input type="number" value={logist} onChange={(e) => setLogist(e.target.value)} className='order-inp' placeholder='Сумма логистика' />
-                </div>
+
               </div>
 
               <div className='d-flex align justify'>
@@ -595,53 +658,6 @@ const Order = () => {
                       }
                     </ul>
                   </div>
-                  <div className='right-limit' style={{ marginLeft: '20px' }}>
-                    <button disabled={actualData.length} style={{ width: "110px" }} onClick={() => setShowDropdownWarehouse(!showDropDownWarehouse)} className={`right-dropdown ${actualData?.length ? 'opacity-5' : ''}`}>
-                      <p className='right-limit-text'>{warehouse}</p>
-                      <img src={arrowDown} className={showDropDownWarehouse ? "up-arrow" : ""} alt="arrow-down-img" />
-                    </button>
-                    <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${(showDropDownWarehouse && actualData.length == 0) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
-                      {
-                        warehouseList.map((item, i) => {
-                          return (<li key={i} onClick={() => {
-                            if (warehouse != item) {
-                              setWarehouse(item);
-                              setShowDropdownWarehouse(false)
-                              getItems({ page, limit, value: search, warehouse: item, filterProperty })
-                            }
-                            return
-                          }} className={`dropdown-li ${warehouse == item ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{item}</a></li>)
-                        })
-                      }
-                    </ul>
-                  </div>
-                  {
-                    !get(docEntry, 'id') && (
-                      <div className='right-limit' style={{ marginLeft: '20px' }}>
-                        <button style={{ width: "140px" }} onClick={() => setShowDropdownStatus(!showDropDownStatus)} className='right-dropdown'>
-                          <p className='right-limit-text'>{statuses[orderStatus].name}</p>
-                          <img src={arrowDown} className={showDropDownStatus ? "up-arrow" : ""} alt="arrow-down-img" />
-                        </button>
-                        <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${showDropDownStatus ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
-                          {
-                            ([1, 2]).map((item, i) => {
-                              return (<li key={i} onClick={() => {
-                                if (orderStatus != item) {
-                                  setShowDropdownStatus(false)
-                                  setOrderStatus(item)
-                                }
-                                return
-                              }} className={`dropdown-li ${orderStatus == item ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{statuses[item].name}</a></li>)
-                            })
-                          }
-                        </ul>
-                      </div>
-                    )
-                  }
-                  {/* <div className='d-flex align  bp-block'>
-                    <p className='info-bp'>Сальдо счет : <span className='bp-summa'>{customerCode ? formatterCurrency(Number(get(customerDataInvoice, 'Balance', 0)), 'USD') : ''}</span></p>
-                    <p className='info-bp'>Лимит : <span className='bp-summa'>{customerCode ? formatterCurrency(Number(get(customerDataInvoice, 'CreditLine', 0)), 'USD') : ''}</span></p>
-                  </div> */}
 
                 </div>
                 <div className='right-head order-head-filter'>
@@ -717,9 +733,7 @@ const Order = () => {
             <div className='table' >
               <div className='table-head'>
                 <ul className='table-head-list d-flex align  justify'>
-                  <li className='table-head-item w-50'>
-                    Код
-                  </li>
+                  <li className='table-head-item w-50'>Код</li>
                   <li className='table-head-item w-100'>Продукция</li>
                   <li className='table-head-item w-50'>Бранд</li>
                   <li className='table-head-item w-50'>Мера</li>
@@ -729,7 +743,7 @@ const Order = () => {
                   <li className='table-head-item w-47px'>
                     <button onClick={() => {
                       let filterData = mainData.filter(el => {
-                        let free = Number(get(el, 'OnHand', '')) - Number(get(el, 'IsCommited', ''))
+                        let free = Number(get(el, 'OnHand.OnHand', '')) - Number(get(el, 'OnHand.IsCommited', ''))
                         return Number(el.value) > 0 && (free >= Number(el.value.trim()))
                       })
                       if (filterData.length) {
@@ -854,6 +868,8 @@ const Order = () => {
             setFilterPropertyResize={setFilterPropertyResize}
             filterData={filterData}
             customerDataInvoice={customerDataInvoice}
+            groups={groups}
+
           />
         </Layout>
       </Style>
@@ -867,8 +883,13 @@ const Order = () => {
           arg={{ page: 1, limit, value: search, warehouse }}
           setPage={setPage}
           setTs={setTs}
+          groups={groups}
         />
-
+        <BusinessPartner
+          getRef={BusinessPartnerModalRef}
+          setCustomerDataInvoice={setCustomerDataInvoice}
+          customerDataInvoice={customerDataInvoice}
+        />
         <ErrorModal
           getRef={getErrorRef}
           title={'Ошибка'}

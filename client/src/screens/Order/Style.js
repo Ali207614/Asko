@@ -16,6 +16,12 @@ li{
   align-items: center;
   z-index: 1000; /* Overlay boshqa kontentdan ustun turishi uchun */
 }
+.btn-businesPartner{
+  outline:none;
+    border:none;
+    background:  none;
+
+}
 .title-menu{
   color:  #000;
     font-style: normal;

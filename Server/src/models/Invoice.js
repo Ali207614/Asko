@@ -27,7 +27,7 @@ const InvoiceSchema = new Schema({
             Quantity: { type: Number, required: true },
             Price: { type: Number, required: true },
             DiscPrcnt: { type: Number, default: 0 },
-            LineTotal: { type: Number, required: true }
+            LineTotal: { type: Number, required: true },
         }
     ]
 }, { timestamps: true });
