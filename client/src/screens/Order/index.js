@@ -195,7 +195,7 @@ const Order = () => {
     return;
   };
 
-  const getCars = (cardCode) => {
+  const getCars = (cardCode, partner) => {
     axios
       .get(
         url + `/api/cars?cardCode=${cardCode}`,
@@ -206,7 +206,7 @@ const Order = () => {
         }
       )
       .then(({ data }) => {
-        setCustomerDataInvoice({ ...customerDataInvoice, Cars: data })
+        setCustomerDataInvoice({ ...partner, Cars: data })
       })
       .catch(err => {
         errorNotify("Mijozlarni yuklashda muommo yuzaga keldi")
@@ -597,7 +597,7 @@ const Order = () => {
               <div className="order-head-data d-flex align justify">
                 <div style={{ width: "10%" }}>
                   <button onClick={() => {
-                    businessPartner.current?.open(setCustomerDataInvoice,customerDataInvoice);
+                    businessPartner.current?.open(setCustomerDataInvoice, customerDataInvoice);
                   }} className='btn-businesPartner'>
                     <img width={20} height={20} src={rightButton} alt="link-busines-partner" />
                   </button>
@@ -615,7 +615,7 @@ const Order = () => {
                           setCustomerCode(get(customerItem, 'CardCode', ''))
                           setCustomerDataInvoice(customerData.find(e => get(e, 'CardCode', '') == get(customerItem, 'CardCode', '')))
                           setCustomerData([])
-                          getCars(get(customerItem, 'CardCode', ''))
+                          getCars(get(customerItem, 'CardCode', ''), customerData.find(e => get(e, 'CardCode', '') == get(customerItem, 'CardCode', '')))
                         }} key={i} className={`dropdown-li`}><a className="dropdown-item" href="#">
                             {get(customerItem, 'CardCode', '') || '-'} - {get(customerItem, 'CardName', '') || '-'}
                           </a></li>

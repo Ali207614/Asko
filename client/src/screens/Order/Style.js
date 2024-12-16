@@ -148,6 +148,7 @@ li{
     font-style: normal;
     font-weight: 500;
     line-height: 24px;
+    opacity: 0.6;
   }
 
 

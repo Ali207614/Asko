@@ -248,6 +248,7 @@ margin-left: 8px;
     font-weight: 500;
     line-height: 24px;
     resize: none;
+
   }
   .order-inp::-webkit-input-placeholder {
     color: #3C3F47;
@@ -257,7 +258,78 @@ margin-left: 8px;
     font-style: normal;
     font-weight: 500;
     line-height: 24px;
+    opacity: 0.6;
+
   }
+
+
+  .up-arrow{
+    transform: rotate(180deg);
+  }
+  .right-limit{
+    position:relative;
+  }
+  .right-limit-text{
+    color:  #3C3F47;
+    font-variant-numeric: lining-nums tabular-nums stacked-fractions;
+    font-feature-settings: 'clig' off, 'liga' off;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px; 
+  }
+  .right-dropdown{
+    outline:none;
+    border:none;
+    width:140px;
+    height:36px;
+    background:  #F7F8F9;
+    border-radius: 8px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    padding:0 10px;
+    border: 1px solid  #E9E9E9;
+
+  }
+  .dropdown-menu{
+    position:absolute;
+    width:100%;
+    
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+    top: 38px;
+    border-radius: 4px;
+  }
+  .dropdown-item{
+    color:  #3C3F47;
+    font-variant-numeric: lining-nums tabular-nums stacked-fractions;
+    font-feature-settings: 'clig' off, 'liga' off;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px; 
+   text-decoration:none;
+   padding:0 16px;
+  }
+  .dropdown-li{
+    list-style:none;
+    background:  #F7F8F9;
+  }
+  .dropdown-li:hover{
+    background:  #dadcde;
+  }
+
+  .display-n{
+    display:none;
+  }
+  .display-b{
+    display:block;
+  }
+
+  .dropdown-active{
+    background:  #dadcde;
+  }
+
 
 .justify {
     justify-content: space-between;

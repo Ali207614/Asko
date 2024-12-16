@@ -167,10 +167,9 @@ class DataRepositories {
 
     getCars({ cardCode = '' }) {
         let sql = `
-        SELECT T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" FROM ${this.db}."@CARCODE"  T0 where "U_bp_code" = '${cardCode}'`
+        SELECT T0."Code", T0."U_MARKA",T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" FROM ${this.db}."@CARCODE"  T0 where "U_bp_code" = '${cardCode}'`
         return sql
     }
-
 }
 
 module.exports = new DataRepositories(db);
