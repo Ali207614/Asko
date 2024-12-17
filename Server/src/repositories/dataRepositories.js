@@ -161,7 +161,7 @@ class DataRepositories {
 
     getAllBusinessPartners() {
         let sql = `
-        SELECT T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0 WHERE T0."CardType" ='C'`
+        SELECT T0."U_customer",T0."U_gender" , T0."U_dateofbirth" , T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0 WHERE T0."CardType" ='C'`
         return sql
     }
 
@@ -169,6 +169,16 @@ class DataRepositories {
         let sql = `
         SELECT T0."Code", T0."U_MARKA",T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" FROM ${this.db}."@CARCODE"  T0 where "U_bp_code" = '${cardCode}'`
         return sql
+    }
+    getLastCodeCars() {
+        let sql = `
+        SELECT T0."Code", T0."U_MARKA", T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" 
+        FROM ${this.db}."@CARCODE" T0 
+        ORDER BY T0."Code" DESC 
+        LIMIT 1
+    `;
+        return sql
+
     }
 }
 

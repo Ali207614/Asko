@@ -292,6 +292,9 @@ margin-left: 8px;
     border: 1px solid  #E9E9E9;
 
   }
+  .partner-item{
+    margin-right: 20px;
+  }
   .dropdown-menu{
     position:absolute;
     width:100%;

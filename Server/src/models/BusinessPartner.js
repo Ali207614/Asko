@@ -7,6 +7,9 @@ const businessPartner = new mongoose.Schema({
     GroupCode: { type: String },
     Phone1: { type: String },
     Phone2: { type: String },
+    U_customer: { type: String },
+    U_gender: { type: String },
+    U_dateofbirth: { type: String },
     Balance: { type: String },
     Cars: { type: [mongoose.Schema.Types.Mixed], default: [] },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });

@@ -7,6 +7,12 @@ const router = new Router();
 
 router.post('/api/login', b1HANA.login);
 
+// router.put('/api/cars', authMiddleware, b1HANA.carsUpdate);
+router.post('/api/cars', authMiddleware, b1SL.createCars);
+
+router.post('/api/business-partner', authMiddleware, b1HANA.login);
+router.put('/api/business-partner', authMiddleware, b1HANA.login);
+
 router.get('/api/items', authMiddleware, b1HANA.items);
 router.get('/api/invoices', authMiddleware, b1HANA.invoices);
 router.get('/api/group', authMiddleware, b1HANA.groups);

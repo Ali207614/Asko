@@ -5,6 +5,7 @@ const tokenService = require('../services/tokenService');
 
 let dbService = require('../services/dbService')
 
+
 const DataRepositories = require("../repositories/dataRepositories");
 const ApiError = require("../exceptions/api-error");
 const Invoice = require("../models/Invoice");
@@ -362,7 +363,6 @@ class b1HANA {
             // Agar kolleksiyada ma'lumot bo'lmasa, yangi ma'lumotlarni yuklash
             const query = await DataRepositories.getAllBusinessPartners();
             const data = await this.execute(query);
-            console.log
 
             // Yangi ma'lumotlarni bazaga saqlash
             await BusinessPartner.insertMany(data);
@@ -384,6 +384,7 @@ class b1HANA {
             next(error); // Xatolikni middleware orqali qaytarish
         }
     };
+
     getCars = async (req, res, next) => {
         try {
             // `CardCode` ni `req.query` dan olish
@@ -424,7 +425,11 @@ class b1HANA {
         }
     };
 
-
+    getLastCodeCars = async (req,res,next) => {
+        const query = await DataRepositories.getLastCodeCars();
+        const data = await this.execute(query);
+        return data
+    }
 }
 
 module.exports = new b1HANA();

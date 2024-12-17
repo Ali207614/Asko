@@ -2,7 +2,7 @@ import React, { memo, useEffect, useState } from 'react';
 import Styles from './Styles';
 import Modal from 'react-modal';
 import { useTranslation } from 'react-i18next';
-import { errorNotify, statuses, warehouseList } from '../../Helper';
+import { errorNotify, statuses, successNotify, warehouseList } from '../../Helper';
 import arrowDown from '../../../assets/images/arrow-down.svg';
 import CloseFilter from '../../../assets/images/close.svg'
 import { get } from 'lodash';
@@ -34,6 +34,21 @@ let carBrand = ['Chevrolet', 'Toyota', 'Volkswagen', 'Mercedes-Benz', 'BMW', 'Te
   return { id: i + 1, name: item }
 })
 
+let gender = [
+  {
+    id: '01',
+    name: 'Мужской'
+  },
+  {
+    id: '02',
+    name: 'Женской'
+  },
+  {
+    id: '03',
+    name: 'Нет'
+  }
+]
+
 const override = {
   position: "absolute",
   left: "50%",
@@ -41,9 +56,12 @@ const override = {
 };
 const BusinessPartner = ({ getRef }) => {
   const { t } = useTranslation();
+  const { getMe } = useSelector(state => state.main);
+
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [showDropDownCarBrand, setShowDropDownCarBrand] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [genderState, setShowGenderState] = useState(false);
   const [cars, setCars] = useState('1'.repeat(20).split('').map(item => {
     return { U_car_name: '', U_car_code: '' }
   }));
@@ -72,17 +90,122 @@ const BusinessPartner = ({ getRef }) => {
     getRef(ref);
   }, []);
 
+  function findDifferences(oldCar, newCar) {
+    const differences = [];
 
+    for (const newObj of newCar) {
+      // Old massivdan bir xil Code bo'yicha obyektni topish
+      const oldObj = oldCar.find(o => o?.Code == newObj.Code);
+      console.log(oldObj)
 
-  let addBusinessPartner = () => {
-    if (get(clone, 'CardName') != get(partner, 'CardName') || get(clone, 'Phone1') != get(partner, 'Phone1') || get(clone, 'Phone2') != get(partner, 'Phone2')) {
-      console.log('partnerga boradi')
+      if (oldObj) {
+        // Har bir property ni solishtirish
+        let hasDifference = false;
+        for (const key in newObj) {
+          if (newObj[key] != oldObj[key]) {
+            hasDifference = true;
+            break; // Birinchi farq topilganda davom ettirish shart emas
+          }
+        }
+
+        if (hasDifference) {
+          differences.push({ ...newObj, status: 'update' }); // O'zgargan obyektni saqlash
+        }
+      } else {
+        // Agar eski massivda bo'lmasa, yangi obyekt hisoblanadi
+        differences.push({ ...newObj, status: 'create' });
+      }
     }
 
-    console.log(cars.filter(item => item.U_car_code || item.U_car_name))
-    console.log(clone.Cars)
-
+    return differences;
   }
+
+  let addBusinessPartner = () => {
+    try {
+      if (
+        get(clone, 'CardName') != get(partner, 'CardName') ||
+        get(clone, 'Phone1') != get(partner, 'Phone1') ||
+        get(clone, 'Phone2') != get(partner, 'Phone2') ||
+        get(clone, 'U_dateofbirth') != get(partner, 'U_dateofbirth') ||
+        get(clone, 'U_customer') != get(partner, 'U_customer') ||
+        get(clone, 'U_gender') != get(partner, 'U_gender')
+      ) {
+        console.log('partnerga boradi')
+      }
+
+      const changedObjects = findDifferences(clone?.Cars || [], cars.filter(item => item.U_car_code || item.U_car_name || item.U_km || item.U_MARKA)).map(item => ({
+        ...item,
+        U_MARKA: get(item, 'U_MARKA', '').toString(),
+        U_car_code: item?.U_car_code || '',
+        U_car_name: item?.U_car_name || '',
+        U_km: item?.U_km || '',
+        U_bp_code: get(partner, 'CardCode'),
+      }));
+
+
+      if (changedObjects.length) {
+        let updates = changedObjects.filter(item => item.status == 'update')
+        let creates = changedObjects.filter(item => item.status == 'create')
+
+        // updateCars(updates)
+        Promise.all(creates.map(item => createCars(item))).then(created => {
+          console.log(created)
+        }).catch(e => {
+          console.log(e, ' bu error')
+        })
+      }
+    }
+    catch (err) {
+      console.log(err)
+    }
+  }
+
+  let updateCars = (data) => {
+    axios
+      .put(
+        url + `/api/cars`,
+        data
+        ,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
+      )
+      .then(({ data }) => {
+        successNotify("Mashinalar update bo'ldi")
+      })
+      .catch(err => {
+        errorNotify("Mashinalar update qilishda muoamo yuzaga keldi")
+      });
+
+    return;
+  }
+
+  let createCars = (data) => {
+    console.log(data)
+    axios
+      .post(
+        url + `/api/cars`,
+        data
+        ,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
+      )
+      .then(({ data }) => {
+        successNotify("Mashinalar qo'shildi bo'ldi")
+      })
+      .catch(err => {
+        errorNotify("Mashinalar qo'shishda muoamo yuzaga keldi")
+      });
+
+    return;
+  }
+
+
 
 
 
@@ -108,7 +231,7 @@ const BusinessPartner = ({ getRef }) => {
               {get(partner, 'CardCode', '') ? 'Обновить' : 'Добавить'}
             </button>
           </div>
-          <div className='d-flex align  justify'>
+          <div className='d-flex align '>
             <div className='partner-item'>
               <input value={partner.CardName} onChange={(e) => setPartner({ ...partner, CardName: e.target.value })} type="text" className='order-inp' placeholder='CardName' />
             </div>
@@ -117,6 +240,34 @@ const BusinessPartner = ({ getRef }) => {
             </div>
             <div className='partner-item'>
               <input value={partner.Phone2} onChange={(e) => setPartner({ ...partner, Phone2: e.target.value })} type="text" className='order-inp' placeholder='Phone2' />
+            </div>
+            <div className='right-limit partner-item' >
+              <button style={{ height: '45.78px' }} onClick={() => setShowGenderState(!genderState)} className={`right-dropdown`}>
+                <p className='right-limit-text'>{gender.find(item => item.id == get(partner, 'U_gender'))?.name}</p>
+                <img src={arrowDown} className={genderState ? "up-arrow" : ""} alt="arrow-down-img" />
+              </button>
+              <ul style={{ zIndex: 1, top: '48px' }} className={`dropdown-menu  ${(genderState) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                {
+                  gender.map((item, ind) => {
+                    return (<li key={ind} onClick={() => {
+                      if (item.id != get(partner, 'U_gender')) {
+                        setPartner({ ...partner, U_gender: item.id });
+                      }
+                      setShowGenderState(false)
+                      return
+                    }} className={`dropdown-li ${item.id == get(partner, 'U_gender') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'name')}</a></li>)
+                  })
+                }
+              </ul>
+            </div>
+
+          </div>
+          <div style={{ margin: '15px 0px' }} className='d-flex align'>
+            <div className='partner-item' >
+              <input value={partner.U_dateofbirth} onChange={(e) => setPartner({ ...partner, U_dateofbirth: e.target.value })} type="date" className='order-inp' placeholder='Birthday' />
+            </div>
+            <div className='partner-item' >
+              <input value={partner.U_customer} onChange={(e) => setPartner({ ...partner, U_customer: e.target.value })} type="text" className='order-inp' placeholder='Qayerdan biladi' />
             </div>
           </div>
 
@@ -194,17 +345,7 @@ const BusinessPartner = ({ getRef }) => {
                                     }
                                   </ul>
                                 </div>
-                                {/* <input
-                                  value={cars[i]?.U_MARKA || ''}
-                                  onChange={(e) => {
-                                    const updatedCars = cars.map((car, index) =>
-                                      index === i ? { ...car, U_MARKA: e.target.value } : car
-                                    );
-                                    setCars(updatedCars);
-                                  }}
-                                  type="text"
-                                  className='table-body-inp'
-                                  placeholder='-' /> */}
+
                               </div>
                               <div className='table-item-child  p-16' >
                                 <input
