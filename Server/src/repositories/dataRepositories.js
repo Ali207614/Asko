@@ -73,7 +73,7 @@ class DataRepositories {
                    T0."DocTotal", 
                    T0."PaidToDate", 
                    T0."SlpCode", 
-                   T2."U_branch",
+                   T0."U_branch",
                    T1."ItemCode", 
                    T1."Dscription", 
                    T1."Quantity", 
@@ -172,10 +172,11 @@ class DataRepositories {
     }
     getLastCodeCars() {
         let sql = `
-        SELECT T0."Code", T0."U_MARKA", T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" 
-        FROM ${this.db}."@CARCODE" T0 
-        ORDER BY T0."Code" DESC 
-        LIMIT 1
+        SELECT T0."Code", T0."U_MARKA", T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name"
+        FROM ${this.db}."@CARCODE" T0
+        ORDER BY CAST(T0."Code" AS INTEGER) DESC
+        LIMIT 1;
+        
     `;
         return sql
 

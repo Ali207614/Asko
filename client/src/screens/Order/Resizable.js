@@ -120,6 +120,8 @@ const Resizable = ({
     };
 
     useEffect(() => {
+        console.log(actualData)
+        console.log(state)
         if (actualData.length === 0) {
             setSearch('');
         }
@@ -230,10 +232,10 @@ const Resizable = ({
                                         <div className='footer-block'>
                                             <p className='footer-text'>Сумма сделки : <span className='footer-text-spn'>
                                                 {
-
                                                     (state.length ? formatterCurrency(
-                                                        state.reduce((a, b) => a + ((Number(get(b, 'PriceList.Price', 0)) * Number(get(b, 'value', 1))) - (Number(get(b, 'Price', 1)) * Number(get(b, 'value', 0)) * Number(get(b, 'Discount', 1)) / 100)), 0)
-                                                        , "USD") : 0)
+                                                        state.reduce((a, b) => a + (
+                                                            (Number(get(b, 'PriceList.Price', 1) || 1) * Number(get(b, 'value', 1)))), 0)
+                                                        , 'UZS') : 0)
                                                 }</span></p>
                                         </div>
                                     </div>

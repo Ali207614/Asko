@@ -41,7 +41,6 @@ class b1SL {
         let body = req.body
         delete body.status
         body = { ...body, "Object": "CARcode", Code: (Number(get(newCode, '[0].Code', "0")) || 0) + 1, }
-        console.log(body)
         const axios = Axios.create({
             baseURL: `${this.api}`,
             timeout: 30000,
@@ -72,6 +71,128 @@ class b1SL {
                     return res.status(get(err, 'response.status', '400') || 400).json({ status: false, message: token.message })
                 } else {
                     return res.status(get(err, 'response.status', '400') || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
+
+                }
+            });
+    }
+
+    updateCars = async (req, res, next) => {
+        let body = req.body
+        delete body.status
+        body = { ...body, "Object": "CARcode", }
+        const axios = Axios.create({
+            baseURL: `${this.api}`,
+            timeout: 30000,
+            headers: {
+                'Cookie': get(getSession(), 'Cookie[0]', '') + get(getSession(), 'Cookie[1]', ''),
+                'SessionId': get(getSession(), 'SessionId', '')
+            },
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+        });
+        return axios
+            .patch(`/CARcode('${req.body.Code}')`, body)
+            .then(async ({ data }) => {
+                let businessPartner = await BusinessPartner.findOne({ CardCode: get(body, 'U_bp_code') })
+                if (businessPartner) {
+                    let ind = businessPartner.Cars.findIndex(item => item.Code == get(body, 'Code', ''))
+                    if (ind > -1) {
+                        businessPartner.Cars[ind] = req.body
+                        await businessPartner.save()
+                    }
+                }
+                return res.status(201).json({ status: true, data })
+            })
+            .catch(async (err) => {
+                if (get(err, 'response.status') == 401) {
+                    let token = await this.auth()
+                    if (token.status) {
+                        return await this.updateCars(req, res, next)
+                    }
+                    return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
+                } else {
+                    return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
+
+                }
+            });
+    }
+    updateBusinessPartner = async (req, res, next) => {
+        delete req.body.Cars
+        delete req.body.__v
+        delete req.body._id
+        delete req.body.created_at
+        delete req.body.updated_at
+        delete req.body.Balance
+
+        let body = req.body
+        const axios = Axios.create({
+            baseURL: `${this.api}`,
+            timeout: 30000,
+            headers: {
+                'Cookie': get(getSession(), 'Cookie[0]', '') + get(getSession(), 'Cookie[1]', ''),
+                'SessionId': get(getSession(), 'SessionId', '')
+            },
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+        });
+        return axios
+            .patch(`/BusinessPartners('${req.body.CardCode}')`, body)
+            .then(async ({ data }) => {
+                let businessPartner = await BusinessPartner.findOne({ CardCode: req.body.CardCode });
+                if (businessPartner) {
+                    Object.assign(businessPartner, req.body); // req.body ni mavjud obyektga birlashtirish
+                    await businessPartner.save(); // Ma'lumotni saqlash
+                    return res.status(200).json({ status: true, data: businessPartner });
+                }
+
+                return res.status(201).json({ status: true, data })
+            })
+            .catch(async (err) => {
+                if (get(err, 'response.status') == 401) {
+                    let token = await this.auth()
+                    if (token.status) {
+                        return await this.updateBusinessPartner(req, res, next)
+                    }
+                    return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
+                } else {
+                    console.log(err)
+                    return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
+
+                }
+            });
+    }
+    createBusinessPartner = async (req, res, next) => {
+        let body = req.body
+        body = { ...req.body, "Series": 83, }
+        const axios = Axios.create({
+            baseURL: `${this.api}`,
+            timeout: 30000,
+            headers: {
+                'Cookie': get(getSession(), 'Cookie[0]', '') + get(getSession(), 'Cookie[1]', ''),
+                'SessionId': get(getSession(), 'SessionId', '')
+            },
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+        });
+        return axios
+            .post(`/BusinessPartners`, body)
+            .then(async ({ data }) => {
+                await BusinessPartner.create({ CardCode: get(data, 'CardCode'), ...req.body })
+                return res.status(201).json({ status: true, data })
+            })
+            .catch(async (err) => {
+                if (get(err, 'response.status') == 401) {
+                    let token = await this.auth()
+                    if (token.status) {
+                        return await this.createBusinessPartner(req, res, next)
+                    }
+                    return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
+                } else {
+                    console.log(err)
+                    return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
 
                 }
             });

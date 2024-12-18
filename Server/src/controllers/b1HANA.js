@@ -100,6 +100,7 @@ class b1HANA {
                 }
             }
             const query = await DataRepositories.getInvoices(req.query, req.user);
+            console.log(query)
             let data = await this.execute(query);
             let newInvoices = []
             if (data.length) {
@@ -117,6 +118,7 @@ class b1HANA {
             return res.status(200).json(newInvoices)
         }
         catch (error) {
+            console.log(error)
             next(error); // Xatolikni middleware orqali qaytarish
         }
     };
@@ -425,10 +427,22 @@ class b1HANA {
         }
     };
 
-    getLastCodeCars = async (req,res,next) => {
+    getLastCodeCars = async (req, res, next) => {
         const query = await DataRepositories.getLastCodeCars();
         const data = await this.execute(query);
         return data
+    }
+
+    createInvoice = async (req, res, next) => {
+        try {
+            let body = { ...req.body, DocCur: "UZS", Items: req.body.DocumentLines, sap: false, CANCELED: 'N', DocStatus: 'O' }
+            await Invoice.create(body)
+            return res.status(201).json()
+        }
+        catch (e) {
+            console.log(e)
+            return res.status(404).json(e)
+        }
     }
 }
 

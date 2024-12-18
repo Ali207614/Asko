@@ -162,6 +162,9 @@ const Order = () => {
     else {
       setCustomerData([])
       setCustomerDataInvoice({})
+      // setCustomer('')
+      // setCustomerCode('')
+
     }
     return () => {
       clearTimeout(timeoutId);
@@ -371,73 +374,43 @@ const Order = () => {
       warningNotify("Miqdor ko'p")
       return
     }
-    let summa = (actualData.length ?
-      actualData.reduce((a, b) => a + (Number(get(b, 'Price', 0)) * Number(get(b, 'value', 0))) - (Number(get(b, 'Price', 0)) * Number(get(b, 'value', 0)) * Number(get(b, 'Discount', 0)) / 100), 0)
-      : 0)
-    if (!get(docEntry, 'id', 0)) {
-    }
     setIsEmpty(false)
     confirmRef.current?.open(`Вы уверены, что хотите это ${get(docEntry, 'id', 0) ? 'обновить' : 'добавить'} ? `);
   }
 
   const Orders = async () => {
-    let link = orderStatus == 2 ? '/api/draft' : `/b1s/v1/Orders`
+    let link = '/api/draft'
     setOrderLoading(true)
     let schema = {
       "CardCode": customerCode,
+      "CardName": customer,
       "DocDate": get(date, 'DocDate'),
       "DocDueDate": get(date, 'DocDueDate'),
       "SalesPersonCode": salesPersonCode,
       "Comments": comment,
-      "U_logsum": Number(logist || 0),
+      "U_branch": get(getMe, 'data.U_branch'),
+      "U_car": get(customerDataInvoice, 'selectCar'),
+      "DocTotal": actualData.reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 1) || 1) * Number(get(b, 'value', 1))), 0),
       "DocumentLines": actualData.map(item => {
         let obj = {
           "ItemCode": get(item, 'ItemCode', ''),
+          "Dscription": get(item, 'ItemName', ''),
           "Quantity": Number(get(item, 'value', 0)),
-          "WarehouseCode": warehouse,
+          "WarehouseCode": get(getMe, 'data.U_branch'),
         }
 
         return obj
       })
     }
-    let checkItem = axios
-      .get(
-        url + `/api/items-check?items=${actualData.map(item => `'${item.ItemCode}'`)}&whsCode=${get(pagination, 'warehouse', warehouse)}`,
-      ).then(({ data }) => {
-        // 
-        let itemsList = get(data, 'value', [])
-        let isEnough = itemsList.find(el => {
-          let currentItem = actualData.find(e => get(e, 'ItemCode') == get(el, 'ItemCode'))
-          return Number(get(el, 'OnHand', '')) - Number(get(el, 'IsCommited', '')) < Number(get(currentItem, 'value'))
-        })
-        if (isEnough) {
-          return { status: true, data: isEnough }
-        }
-      }).catch(e => {
-        errorNotify("Tovarlar tekshirishda muommo yuzaga keldi")
-        setOrderLoading(false)
-        return { status: false }
-      })
-    let inData = await checkItem
-    if (get(inData, 'status')) {
-      setOrderLoading(false)
-      errorNotify(`${get(inData, 'data.ItemName')} tovaridan yetarli miqdorda mavjud emas`)
-      return
-    }
-    let body = orderStatus == 1 ? schema : actualData.map(item => {
-      return { ...item, CardName: customer, CardCode: customerCode, ...date, WhsCode: warehouse, Quantity: item.value, schema, salesPersonCode, salesPerson, comment, ...customerDataInvoice, U_logsum: logist }
-    })
+    let body = schema
     axios
       .post(
         url + link,
         body,
         {
           headers: {
-            info: JSON.stringify({
-              'Cookie': get(getMe, 'Cookie[0]', '') + get(getMe, 'Cookie[1]', ''),
-              'SessionId': get(getMe, 'SessionId', ''),
-            })
-          },
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
         }
       )
       .then(({ data }) => {
@@ -464,6 +437,7 @@ const Order = () => {
           return
         }
         setOrderLoading(false)
+        console.log(err)
         errorRef.current?.open(get(err, 'response.data.error.message.value', 'Ошибка'));
       });
 
@@ -659,6 +633,26 @@ const Order = () => {
                     </ul>
                   </div>
 
+                  <div className='right-limit' >
+                    <button style={{ width: "200px" }} onClick={() => setShowDropdownStatus(!showDropDownStatus)} className={`right-dropdown`}>
+                      <p className='right-limit-text'>{get(customerDataInvoice, 'selectCar', '-') || '-'}</p>
+                      <img src={arrowDown} className={showDropDownStatus && get(customerDataInvoice, 'Cars', []).length ? "up-arrow" : ""} alt="arrow-down-img" />
+                    </button>
+                    <ul style={{ zIndex: 1, width: '240px' }} className={`dropdown-menu  ${(showDropDownStatus && get(customerDataInvoice, 'Cars', []).length) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                      {
+                        [{ U_car_code: '' }, ...get(customerDataInvoice, 'Cars', [])].map((item, i) => {
+                          return (<li style={{ height: '30px' }} key={i} onClick={() => {
+                            if (get(customerDataInvoice, 'selectCar') != get(item, 'U_car_code')) {
+                              setCustomerDataInvoice({ ...customerDataInvoice, selectCar: get(item, 'U_car_code') })
+                              setShowDropdownStatus(false)
+                              return
+                            }
+                            return
+                          }} className={`dropdown-li ${get(customerDataInvoice, 'selectCar') == get(item, 'U_car_code') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'U_car_name', '')}  -  {get(item, 'U_car_code', '')}</a></li>)
+                        })
+                      }
+                    </ul>
+                  </div>
                 </div>
                 <div className='right-head order-head-filter'>
                   <div className='right-pagination'>
@@ -889,6 +883,8 @@ const Order = () => {
           getRef={BusinessPartnerModalRef}
           setCustomerDataInvoice={setCustomerDataInvoice}
           customerDataInvoice={customerDataInvoice}
+          setCustomer={setCustomer}
+          setCustomerCode={setCustomerCode}
         />
         <ErrorModal
           getRef={getErrorRef}

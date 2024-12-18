@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const InvoiceSchema = new Schema({
-    DocEntry: { type: Number, required: true }, // Yagona identifikator
-    DocNum: { type: Number, required: true },   // Hujjat raqami
-    DocType: { type: String, required: true },  // Hujjat turi
+    DocEntry: { type: Number, required: false }, // Yagona identifikator
+    DocNum: { type: Number, required: false },   // Hujjat raqami
+    DocType: { type: String, required: false },  // Hujjat turi
     CANCELED: { type: String, enum: ['Y', 'N'], required: true }, // Bekor qilinganlik holati
     DocStatus: { type: String, enum: ['O', 'C'], required: true }, // Holat (Ochilgan yoki yopilgan)
     DocDate: { type: Date, required: true },    // Hujjat sanasi
@@ -15,19 +15,20 @@ const InvoiceSchema = new Schema({
     Phone2: { type: String, required: false }, // Mijoz nomi
     DocCur: { type: String, required: false },   // Valyuta kodi
     DocRate: { type: Number, required: false },  // Valyuta kursi
-    DocTotal: { type: Number, required: true }, // Umumiy summa
+    DocTotal: { type: Number, required: false }, // Umumiy summa
     PaidToDate: { type: Number, default: 0 },   // To'langan summa
     SlpCode: { type: Number, required: false },  // Sotuvchi kodi
     U_branch: { type: String, required: false }, // Filial kodi
     U_car: { type: String, required: false }, // Filial kodi
+    sap: { type: Boolean, default: true },
     Items: [
         {
-            ItemCode: { type: String, required: true },
-            Dscription: { type: String, required: true },
-            Quantity: { type: Number, required: true },
-            Price: { type: Number, required: true },
+            ItemCode: { type: String, required: false },
+            Dscription: { type: String, required: false },
+            Quantity: { type: Number, required: false },
+            Price: { type: Number, required: false },
             DiscPrcnt: { type: Number, default: 0 },
-            LineTotal: { type: Number, required: true },
+            LineTotal: { type: Number, required: false },
         }
     ]
 }, { timestamps: true });

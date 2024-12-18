@@ -9,6 +9,7 @@ import { get } from 'lodash';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { FadeLoader } from 'react-spinners';
+import Spinner from '../../Spinner';
 let url = process.env.REACT_APP_API_URL
 
 const customStyles = {
@@ -54,13 +55,14 @@ const override = {
   left: "50%",
   top: "50%",
 };
-const BusinessPartner = ({ getRef }) => {
+const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, setCustomerCode, setCustomer }) => {
   const { t } = useTranslation();
   const { getMe } = useSelector(state => state.main);
 
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [showDropDownCarBrand, setShowDropDownCarBrand] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
   const [genderState, setShowGenderState] = useState(false);
   const [cars, setCars] = useState('1'.repeat(20).split('').map(item => {
     return { U_car_name: '', U_car_code: '' }
@@ -96,7 +98,6 @@ const BusinessPartner = ({ getRef }) => {
     for (const newObj of newCar) {
       // Old massivdan bir xil Code bo'yicha obyektni topish
       const oldObj = oldCar.find(o => o?.Code == newObj.Code);
-      console.log(oldObj)
 
       if (oldObj) {
         // Har bir property ni solishtirish
@@ -120,8 +121,9 @@ const BusinessPartner = ({ getRef }) => {
     return differences;
   }
 
-  let addBusinessPartner = () => {
+  let addBusinessPartner = async () => {
     try {
+      let cardCode = get(partner, 'CardCode')
       if (
         get(clone, 'CardName') != get(partner, 'CardName') ||
         get(clone, 'Phone1') != get(partner, 'Phone1') ||
@@ -130,80 +132,166 @@ const BusinessPartner = ({ getRef }) => {
         get(clone, 'U_customer') != get(partner, 'U_customer') ||
         get(clone, 'U_gender') != get(partner, 'U_gender')
       ) {
-        console.log('partnerga boradi')
+        if (!get(clone, 'CardCode')) {
+          let result = await createPartner(partner);
+          cardCode = get(result, 'CardCode')
+        }
+        else {
+          await updatePartner(partner);
+        }
+      }
+      if (cardCode) {
+        const changedObjects = findDifferences(clone?.Cars || [], cars.filter(item => item.U_car_code || item.U_car_name || item.U_km || item.U_MARKA)).map(item => ({
+          ...item,
+          U_MARKA: get(item, 'U_MARKA', '').toString(),
+          U_car_code: item?.U_car_code || '',
+          U_car_name: item?.U_car_name || '',
+          U_km: item?.U_km || '',
+          U_bp_code: cardCode,
+        }));
+
+        if (changedObjects.length) {
+          let updates = changedObjects.filter(item => item.status == 'update');
+          let creates = changedObjects.filter(item => item.status == 'create');
+
+          if (creates.length) {
+            try {
+              await Promise.all(creates.map(item => createCars(item)));
+            } catch (e) {
+              console.error(e, 'Mashinalarni qo‘shishda xatolik yuzaga keldi');
+            }
+          }
+
+          if (updates.length) {
+            try {
+              await Promise.all(updates.map(item => updateCars(item)));
+            } catch (e) {
+              console.error(e, 'Mashinalarni yangilashda xatolik yuzaga keldi');
+            }
+          }
+
+          await getCars(cardCode);
+        }
       }
 
-      const changedObjects = findDifferences(clone?.Cars || [], cars.filter(item => item.U_car_code || item.U_car_name || item.U_km || item.U_MARKA)).map(item => ({
-        ...item,
-        U_MARKA: get(item, 'U_MARKA', '').toString(),
-        U_car_code: item?.U_car_code || '',
-        U_car_name: item?.U_car_name || '',
-        U_km: item?.U_km || '',
-        U_bp_code: get(partner, 'CardCode'),
-      }));
 
-
-      if (changedObjects.length) {
-        let updates = changedObjects.filter(item => item.status == 'update')
-        let creates = changedObjects.filter(item => item.status == 'create')
-
-        // updateCars(updates)
-        Promise.all(creates.map(item => createCars(item))).then(created => {
-          console.log(created)
-        }).catch(e => {
-          console.log(e, ' bu error')
-        })
-      }
+    } catch (err) {
+      console.error(err);
     }
-    catch (err) {
-      console.log(err)
+  };
+
+  let updateCars = async (data) => {
+    try {
+      setUpdateLoading(true)
+
+      await axios.put(url + `/api/cars`, data, {
+        headers: {
+          'Authorization': `Bearer ${get(getMe, 'token')}`,
+        },
+      });
+      setUpdateLoading(false)
+
+      successNotify("Mashinalar yangilandi");
+    } catch (err) {
+      setUpdateLoading(false)
+
+      errorNotify("Mashinalarni yangilashda muammo yuzaga keldi");
     }
-  }
+  };
 
-  let updateCars = (data) => {
-    axios
-      .put(
-        url + `/api/cars`,
-        data
-        ,
-        {
-          headers: {
-            'Authorization': `Bearer ${get(getMe, 'token')}`,
-          }
-        }
-      )
-      .then(({ data }) => {
-        successNotify("Mashinalar update bo'ldi")
-      })
-      .catch(err => {
-        errorNotify("Mashinalar update qilishda muoamo yuzaga keldi")
+  let createCars = async (data) => {
+    try {
+      setUpdateLoading(true)
+
+      await axios.post(url + `/api/cars`, data, {
+        headers: {
+          'Authorization': `Bearer ${get(getMe, 'token')}`,
+        },
       });
+      setUpdateLoading(false)
 
-    return;
-  }
+      successNotify("Mashinalar qo‘shildi");
+    } catch (err) {
+      setUpdateLoading(false)
 
-  let createCars = (data) => {
-    console.log(data)
-    axios
-      .post(
-        url + `/api/cars`,
-        data
-        ,
-        {
-          headers: {
-            'Authorization': `Bearer ${get(getMe, 'token')}`,
-          }
-        }
-      )
-      .then(({ data }) => {
-        successNotify("Mashinalar qo'shildi bo'ldi")
-      })
-      .catch(err => {
-        errorNotify("Mashinalar qo'shishda muoamo yuzaga keldi")
+      errorNotify("Mashinalarni qo‘shishda muammo yuzaga keldi");
+    }
+  };
+
+
+  let updatePartner = async (data) => {
+    try {
+      setUpdateLoading(true)
+
+      await axios.put(url + `/api/business-partner`, data, {
+        headers: {
+          'Authorization': `Bearer ${get(getMe, 'token')}`,
+        },
       });
+      setClone({ ...clone, ...data });
+      setPartner({ ...partner, ...data });
+      setCustomerDataInvoice({ ...partner, ...data })
+      successNotify("Business Partner update bo'ldi");
+      setUpdateLoading(false)
 
-    return;
-  }
+      return get(data, 'CardCode')
+    } catch (err) {
+      setUpdateLoading(false)
+
+      errorNotify("Business Partner update qilishda muammo yuzaga keldi");
+    }
+  };
+
+  let createPartner = async (data) => {
+    try {
+      setUpdateLoading(true)
+      let result = await axios.post(url + `/api/business-partner`, data, {
+        headers: {
+          'Authorization': `Bearer ${get(getMe, 'token')}`,
+        },
+      });
+      let obj = { ...partner, ...data, ...{ CardCode: get(result, 'data.data.CardCode') } }
+      setClone(obj);
+      setPartner(obj);
+      setCustomerDataInvoice(obj)
+      successNotify("Business Partner qo'shildi");
+      setCustomerCode(get(result, 'data.data.CardCode'))
+      setCustomer(get(result, 'data.data.CardName'))
+      setUpdateLoading(false)
+
+      return obj
+    } catch (err) {
+      setUpdateLoading(false)
+
+      errorNotify("Business Partner qo'shishda muomo yuzaga keldi");
+    }
+  };
+
+  const getCars = async (cardCode) => {
+    try {
+      setUpdateLoading(true)
+
+      const { data } = await axios.get(url + `/api/cars?cardCode=${cardCode}`, {
+        headers: {
+          'Authorization': `Bearer ${get(getMe, 'token')}`,
+        },
+      });
+      setCars([
+        ...data, // Mavjud mashinalarni qo'shamiz
+        ...Array(20 - data.length).fill({ U_car_name: '', U_car_code: '' }), // Bo'sh elementlar bilan to'ldiramiz
+      ]);
+      setClone({ ...clone, Cars: data, CardCode: cardCode });
+      setPartner({ ...partner, Cars: data, CardCode: cardCode });
+      setCustomerDataInvoice({ ...partner, Cars: data, CardCode: cardCode })
+      setUpdateLoading(false)
+
+    } catch (err) {
+      setUpdateLoading(false)
+
+      errorNotify("Mijozlarning mashinalarini yuklashda muammo yuzaga keldi");
+    }
+  };
+
 
 
 
@@ -228,7 +316,7 @@ const BusinessPartner = ({ getRef }) => {
           <div style={{ marginBottom: '20px' }} className='d-flex align  justify'>
             <h3>Business Partner</h3>
             <button className='btn-head' onClick={addBusinessPartner}>
-              {get(partner, 'CardCode', '') ? 'Обновить' : 'Добавить'}
+              {updateLoading ? <Spinner /> : (get(partner, 'CardCode', '') ? 'Обновить' : 'Добавить')}
             </button>
           </div>
           <div className='d-flex align '>
