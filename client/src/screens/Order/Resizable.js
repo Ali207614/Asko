@@ -17,6 +17,7 @@ import { ResizableBox } from 'react-resizable';
 import throttle from 'lodash/throttle';
 import { get } from 'lodash';
 import { FilterModalResizable } from '../../components/Modal';
+import { useSelector } from 'react-redux';
 
 const Resizable = ({
     state,
@@ -40,7 +41,11 @@ const Resizable = ({
     customerDataInvoice,
     groups
 }) => {
+    const { getMe } = useSelector(state => state.main);
+
+
     let limitList = [1, 10, 50, 100, 500, 1000];
+
     const [height, setHeight] = useState(100);
     const [showDropdownSelect, setShowDropdownSelect] = useState(false);
     const [search, setSearch] = useState('');
@@ -120,8 +125,6 @@ const Resizable = ({
     };
 
     useEffect(() => {
-        console.log(actualData)
-        console.log(state)
         if (actualData.length === 0) {
             setSearch('');
         }
@@ -230,11 +233,20 @@ const Resizable = ({
 
                                     <div className='right-head' style={{ justifyContent: 'space-between' }}>
                                         <div className='footer-block'>
-                                            <p className='footer-text'>Сумма сделки : <span className='footer-text-spn'>
+                                            <p className='footer-text'>Сумма сделки USD : <span className='footer-text-spn'>
                                                 {
                                                     (state.length ? formatterCurrency(
                                                         state.reduce((a, b) => a + (
-                                                            (Number(get(b, 'PriceList.Price', 1) || 1) * Number(get(b, 'value', 1)))), 0)
+                                                            (Number(get(b, 'PriceList.Price', 0)) * Number(get(b, 'value', 1)))), 0)
+                                                        , 'USD') : 0)
+                                                }</span></p>
+                                        </div>
+                                        <div className='footer-block'>
+                                            <p className='footer-text'>Сумма сделки UZS : <span className='footer-text-spn'>
+                                                {
+                                                    (state.length ? formatterCurrency(
+                                                        state.reduce((a, b) => a + (
+                                                            (Number(get(b, 'PriceList.Price', 0)) * Number(get(b, 'value', 1)))), 0) * (get(getMe, 'currency.Rate', 1) || 1)
                                                         , 'UZS') : 0)
                                                 }</span></p>
                                         </div>

@@ -30,6 +30,8 @@ const Home = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { setMe } = main.actions;
+
     const { setFilter } = main.actions;
     const { getMe, getFilter } = useSelector(state => state.main);
 
@@ -87,6 +89,31 @@ const Home = () => {
     }, [limit, ts, search, filterProperty, activeData])
 
 
+    const getCurrency = () => {
+        axios
+            .get(
+                url + `/api/getCurrency`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${get(getMe, 'token')}`,
+                    }
+                }
+            )
+            .then(({ data }) => {
+                dispatch(setMe({ ...getMe, currency: data }));
+            })
+            .catch(err => {
+                errorNotify(`Valyuta yuklashda muomo yuzaga keldi`)
+            });
+
+        return;
+    };
+
+    useEffect(() => {
+        getCurrency()
+    }, [])
+
+
     useEffect(() => {
         const delay = 1000;
         let timeoutId;
@@ -126,6 +153,9 @@ const Home = () => {
             }).join(''), status: status.length
         }
     }
+
+
+
 
     const getOrders = (pagination) => {
         setLoading(true)
@@ -338,7 +368,7 @@ const Home = () => {
 
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
-                                                                        {get(item, 'Phone1', '') || ''}
+                                                                        {get(item, 'Phone1', '-') || '-'}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
@@ -346,8 +376,6 @@ const Home = () => {
                                                                         {get(item, 'U_car', '') || 'Нет'}
                                                                     </p>
                                                                 </div>
-
-
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
                                                                         {moment(get(item, 'DocDate', '')).format("DD-MM-YYYY")}
@@ -377,9 +405,19 @@ const Home = () => {
                                                             </div>
                                                             <div className='table-item-foot d-flex align'>
                                                                 <button className='table-item-btn d-flex align'>
-                                                                    <Link className='table-item-text d-flex align' to={(get(item, 'draft') ? `/order/${item.DocEntry}/draft` : `/order/${item.DocEntry}`)}>Просмотреть и изменить заказ  <img src={editIcon} alt="arrow right" /></Link>
+                                                                    {
+                                                                        get(item, 'sap') ? (
+                                                                            <Link className='table-item-text d-flex align' to={`/invoice/${get(item, 'DocEntry')}`}>
+                                                                                Просмотреть <img src={editIcon} alt="arrow right" />
+                                                                            </Link>
+                                                                        ) : (
+                                                                            <Link className='table-item-text d-flex align' to={`/invoice/${get(item, 'UUID')}`}>
+                                                                                Просмотреть и изменить заказ <img src={editIcon} alt="arrow right" />
+                                                                            </Link>
+                                                                        )
+                                                                    }
                                                                 </button>
-                                                                {/* invoice */}
+
                                                                 <div className="dropdown-container" >
                                                                     <button onClick={() => {
                                                                         setInvoiceDropDown(!invoiceDropDown)

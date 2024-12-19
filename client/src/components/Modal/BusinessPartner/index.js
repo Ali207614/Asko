@@ -76,6 +76,7 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
   useEffect(() => {
     const ref = {
       open: (setCustomerDataInvoice, customerDataInvoice) => {
+        console.log(customerDataInvoice, ' bu partner')
         setIsOpenModal(true);
         setCars([
           ...get(customerDataInvoice, 'Cars', []), // Mavjud mashinalarni qo'shamiz

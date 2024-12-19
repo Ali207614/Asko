@@ -170,6 +170,7 @@ class DataRepositories {
         SELECT T0."Code", T0."U_MARKA",T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" FROM ${this.db}."@CARCODE"  T0 where "U_bp_code" = '${cardCode}'`
         return sql
     }
+
     getLastCodeCars() {
         let sql = `
         SELECT T0."Code", T0."U_MARKA", T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name"
@@ -180,6 +181,12 @@ class DataRepositories {
     `;
         return sql
 
+    }
+    getLastCurrency() {
+        let sql = `SELECT T0."Currency", T0."RateDate", T0."Rate" 
+        FROM ${db}.ORTT T0 
+        WHERE T0."RateDate" = CURRENT_DATE and T0."Currency"='USD'`
+        return sql
     }
 }
 

@@ -4,10 +4,13 @@ import TopImage from '../../assets/images/logoAltitude.svg';
 import { useTranslation } from 'react-i18next';
 import { get } from 'lodash';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import formatterCurrency from '../../helpers/currency';
+import { useSelector } from 'react-redux';
 
 const Header = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { getMe } = useSelector(state => state.main);
 
 
   return (
@@ -35,9 +38,20 @@ const Header = () => {
                 </ul>
               </nav>
             </div>
-            <div className='left-side df'>
-              <span className='circle'>M</span>
-              <p className='textMain'>Manager</p>
+
+            <div className='df'>
+              <div className='right-head' style={{ justifyContent: 'space-between', marginRight: '20px' }}>
+                <div className='footer-block' style={{ background: "#F7F8F9" }}>
+                  <p className='footer-text'>Курс доллара: <span className='footer-text-spn'>
+                    {
+                      (formatterCurrency(Number(get(getMe, 'currency.Rate', 1) || 1), 'UZS'))
+                    }</span></p>
+                </div>
+              </div>
+              <div className='left-side df'>
+                <span className='circle'>M</span>
+                <p className='textMain'>Manager</p>
+              </div>
             </div>
           </div>
         </div>

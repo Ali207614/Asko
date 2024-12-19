@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const InvoiceSchema = new Schema({
+    UUID: { type: String, required: false }, // Yagona identifikator
     DocEntry: { type: Number, required: false }, // Yagona identifikator
     DocNum: { type: Number, required: false },   // Hujjat raqami
     DocType: { type: String, required: false },  // Hujjat turi
@@ -9,6 +10,7 @@ const InvoiceSchema = new Schema({
     DocStatus: { type: String, enum: ['O', 'C'], required: true }, // Holat (Ochilgan yoki yopilgan)
     DocDate: { type: Date, required: true },    // Hujjat sanasi
     DocDueDate: { type: Date, required: false }, // To'lov muddati
+    Comments: { type: String, required: true }, // Mijoz kodi
     CardCode: { type: String, required: true }, // Mijoz kodi
     CardName: { type: String, required: true }, // Mijoz nomi
     Phone1: { type: String, required: false }, // Mijoz nomi

@@ -21,11 +21,12 @@ import { useSelector } from 'react-redux';
 import { FixedSizeList as List } from 'react-window';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { limitList, statuses, warehouseList, errorNotify, warningNotify, successNotify } from '../../components/Helper';
+import { limitList, errorNotify, warningNotify, successNotify } from '../../components/Helper';
 import 'react-resizable/css/styles.css';
 import Resizable from './Resizable';
 import moment from 'moment';
 import rightButton from '../../assets/images/right.svg';
+import { validate } from 'uuid';
 
 let url = process.env.REACT_APP_API_URL
 
@@ -67,7 +68,6 @@ const Order = () => {
   const [docEntry, setDocEntry] = useState({
     id,
     status: false,
-    draft: get(location, 'pathname').includes('draft')
   });
 
   const [orderStatus, setOrderStatus] = useState('1')
@@ -75,8 +75,6 @@ const Order = () => {
   const [salesPersonList, setSalesPersonList] = useState([
     { SlpCode: -1, SlpName: "Нет" }])
 
-  const [showDropDownWarehouse, setShowDropdownWarehouse] = useState(false)
-  const [warehouse, setWarehouse] = useState('BAZA1')
 
   const [showDropDownSalesPerson, setShowDropdownSalesPerson] = useState(false)
   const [salesPerson, setSalesPerson] = useState('Нет')
@@ -87,7 +85,6 @@ const Order = () => {
   const [logist, setLogist] = useState()
 
   const [filterData, setFilterData] = useState([])
-  const [cars, setCars] = useState([])
   const [groups, setGroups] = useState([])
 
   const [filterProperty, setFilterProperty] = useState({})
@@ -136,7 +133,7 @@ const Order = () => {
     let timeoutId;
     if (search) {
       timeoutId = setTimeout(() => {
-        getItems({ page: 1, limit, value: search, warehouse, filterProperty })
+        getItems({ page: 1, limit, value: search, filterProperty })
         setTs(limit)
         setPage(1);
       }, delay);
@@ -161,10 +158,6 @@ const Order = () => {
     }
     else {
       setCustomerData([])
-      setCustomerDataInvoice({})
-      // setCustomer('')
-      // setCustomerCode('')
-
     }
     return () => {
       clearTimeout(timeoutId);
@@ -221,10 +214,15 @@ const Order = () => {
 
 
   const getOrderByDocEntry = (doc) => {
-    let link = get(docEntry, 'draft') ? `/api/draft/${doc}` : `/api/order?docEntry=${doc}`
+    let link = `/api/draft/${doc}`
     return axios
       .get(
-        url + link ,
+        url + link,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
       )
       .then(({ data }) => {
         return data
@@ -282,14 +280,51 @@ const Order = () => {
         }
       )
       .then(({ data }) => {
-        setLoading(false)
 
-        setMainData(data.map(item => {
-          return { ...item, value: '', Discount: '' }
-        }))
-        setAllPageLength(get(data, '[0].LENGTH', 0))
-        if (groups.length == 0) {
-          getGroups()
+        if (get(docEntry, 'id') && !get(docEntry, 'status')) {
+          getOrderByDocEntry(get(docEntry, 'id', 0)).then(orderData => {
+            setDocEntry({ ...docEntry, status: true })
+
+            setLoading(false)
+            setCustomer(get(orderData, 'CardName', ''))
+            setCustomerCode(get(orderData, 'CardCode', ''))
+            setCustomerDataInvoice({ ...get(orderData, 'customer'), selectCar: orderData.U_car })
+
+            setSalesPerson(get(orderData, 'SLP'))
+            setSalesPersonCode(get(orderData, 'SlpCode'))
+            setComment(get(orderData, 'Comments'))
+
+            setDate({
+              DocDate: moment(get(orderData, 'DocDate', '')).format("YYYY-MM-DD"),
+              DocDueDate: moment(get(orderData, 'DocDueDate', '')).format("YYYY-MM-DD")
+            })
+            setAllPageLengthSelect(orderData.Items.length)
+            setAllPageLength(get(data, '[0].LENGTH', 0) - orderData.Items.length)
+
+            setMainData(data.map(item => {
+              return { ...item, value: '', Discount: '' }
+            }).filter(el => !orderData.Items.map(item => item.ItemCode).includes(get(el, 'ItemCode'))))
+
+
+            setState(orderData.Items.map(item => {
+              return { ...item, value: Number(item.Quantity).toString() }
+            }))
+            setActualData(orderData.Items.map(item => {
+              return { ...item, value: Number(item.Quantity).toString() }
+            }))
+
+          })
+        }
+        else {
+          setLoading(false)
+
+          setMainData(data.map(item => {
+            return { ...item, value: '', Discount: '' }
+          }))
+          setAllPageLength(get(data, '[0].LENGTH', 0))
+          if (groups.length == 0) {
+            getGroups()
+          }
         }
       })
       .catch(err => {
@@ -437,7 +472,6 @@ const Order = () => {
           return
         }
         setOrderLoading(false)
-        console.log(err)
         errorRef.current?.open(get(err, 'response.data.error.message.value', 'Ошибка'));
       });
 
@@ -445,38 +479,39 @@ const Order = () => {
   };
 
   const Update = () => {
-    let link = get(docEntry, 'draft') ? `/api/draft/${get(docEntry, 'id', 0)}` : `/b1s/v1/Orders(${get(docEntry, 'id')})`
+    let link = `/api/draft/${get(docEntry, 'id', 0)}`
     let schema = {
       "CardCode": customerCode,
+      "CardName": customer,
       "DocDate": get(date, 'DocDate'),
       "DocDueDate": get(date, 'DocDueDate'),
       "SalesPersonCode": salesPersonCode,
       "Comments": comment,
-      "U_logsum": Number(logist || 0),
+      "U_branch": get(getMe, 'data.U_branch'),
+      "U_car": get(customerDataInvoice, 'selectCar'),
+      "DocTotal": actualData.reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 1) || 1) * Number(get(b, 'value', 1))), 0) * get(getMe, 'currency.Rate', 1) || 1,
       "DocumentLines": actualData.map(item => {
-        return {
+        let obj = {
           "ItemCode": get(item, 'ItemCode', ''),
+          "Dscription": get(item, 'ItemName', ''),
           "Quantity": Number(get(item, 'value', 0)),
-          "WarehouseCode": warehouse,
+          "WarehouseCode": get(getMe, 'data.U_branch'),
         }
+
+        return obj
       })
     }
-    let body = !get(docEntry, 'draft') ? schema : actualData.map(item => {
-      return { ...item, CardName: customer, CardCode: customerCode, ...date, WhsCode: warehouse, Quantity: item.value, schema, salesPersonCode, salesPerson, comment, ...customerDataInvoice, U_logsum: logist }
-    })
+
+    let body = schema
     setOrderLoading(true)
     axios
-      .patch(
+      .put(
         url + link,
         body,
         {
           headers: {
-            info: JSON.stringify({
-              'Cookie': get(getMe, 'Cookie[0]', '') + get(getMe, 'Cookie[1]', ''),
-              'SessionId': get(getMe, 'SessionId', ''),
-            }),
-            "B1S-ReplaceCollectionsOnPatch": "true",
-          },
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
         }
       )
       .then(({ data }) => {
@@ -564,9 +599,9 @@ const Order = () => {
                   <button onClick={() => navigate('/home')} className='btn-back'>Назад</button>
                   <h3 className='title-menu'>Заказ</h3>
                 </div>
-                <button onClick={() => postOrder(get(docEntry, 'id', 0) ? true : false)} className={`btn-head position-relative`}>
+                {(!get(docEntry, 'id') || validate(get(docEntry, 'id'))) ? <button onClick={() => postOrder(get(docEntry, 'id', 0) ? true : false)} className={`btn-head position-relative`}>
                   {orderLoading ? <Spinner /> : (get(docEntry, 'id', 0) ? 'Обновить' : 'Добавить')}
-                </button>
+                </button> : ''}
               </div>
               <div className="order-head-data d-flex align justify">
                 <div style={{ width: "10%" }}>
@@ -659,7 +694,7 @@ const Order = () => {
                     <p className='pagination-text'><span>{page}-{ts}</span> <span>of {allPageLength}</span> </p>
                     <button onClick={() => {
                       if (page > 1) {
-                        getItems({ page: page - limit, limit, value: search, warehouse, filterProperty })
+                        getItems({ page: page - limit, limit, value: search, filterProperty })
                         setPage(page - limit);
                         setTs(ts - limit)
                       }
@@ -669,7 +704,7 @@ const Order = () => {
 
                     <button onClick={() => {
                       if (ts < allPageLength) {
-                        getItems({ page: page + limit, limit, value: search, warehouse, filterProperty })
+                        getItems({ page: page + limit, limit, value: search, filterProperty })
                         setPage(page + limit)
                         setTs(limit + ts)
                       }
@@ -686,7 +721,7 @@ const Order = () => {
                       (get(subQuery(filterProperty), 'status') && get(filterProperty, 'click')) ? (
                         <button onClick={() => {
                           setFilterProperty({})
-                          getItems({ page: 1, limit, value: search, warehouse })
+                          getItems({ page: 1, limit, value: search })
                           setPage(1)
                           setTs(limit)
                         }} className={`close-btn`}>
@@ -713,7 +748,7 @@ const Order = () => {
                               setPage(1);
                               setShowDropdown(false);
                               setTs(item)
-                              getItems({ page: 1, limit: item, value: search, warehouse, filterProperty })
+                              getItems({ page: 1, limit: item, value: search, filterProperty })
                             }
                             return
                           }} className={`dropdown-li ${limit == item ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{item}</a></li>)
@@ -874,7 +909,7 @@ const Order = () => {
           filterProperty={filterProperty}
           setFilterProperty={setFilterProperty}
           getItems={getItems}
-          arg={{ page: 1, limit, value: search, warehouse }}
+          arg={{ page: 1, limit, value: search }}
           setPage={setPage}
           setTs={setTs}
           groups={groups}

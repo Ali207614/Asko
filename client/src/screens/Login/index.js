@@ -12,6 +12,7 @@ import offEye from '../../assets/images/off_eye.svg';
 import onEye from '../../assets/images/on_eye.svg';
 import axios from 'axios';
 import { ClipLoader } from "react-spinners";
+import { errorNotify } from '../../components/Helper';
 
 let url = process.env.REACT_APP_API_URL
 let db = process.env.REACT_APP_API_COMPANY_DB
@@ -53,6 +54,8 @@ const Login = () => {
   // Font lar bilan ishlash
   // zagruzka icon
   // error 
+
+
 
   const loginFn = (e) => {
     e.preventDefault()

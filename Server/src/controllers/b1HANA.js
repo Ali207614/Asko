@@ -2,7 +2,7 @@ const Axios = require("axios");
 const https = require("https");
 const { get } = require("lodash");
 const tokenService = require('../services/tokenService');
-
+const { v4: uuidv4, validate } = require('uuid');
 let dbService = require('../services/dbService')
 
 
@@ -12,6 +12,7 @@ const Invoice = require("../models/Invoice");
 const Item = require("../models/Item");
 const ItemGroup = require("../models/ItemGroup");
 const BusinessPartner = require("../models/BusinessPartner");
+const Currency = require("../models/Currency");
 require('dotenv').config();
 
 
@@ -100,7 +101,6 @@ class b1HANA {
                 }
             }
             const query = await DataRepositories.getInvoices(req.query, req.user);
-            console.log(query)
             let data = await this.execute(query);
             let newInvoices = []
             if (data.length) {
@@ -435,7 +435,7 @@ class b1HANA {
 
     createInvoice = async (req, res, next) => {
         try {
-            let body = { ...req.body, DocCur: "UZS", Items: req.body.DocumentLines, sap: false, CANCELED: 'N', DocStatus: 'O' }
+            let body = { ...req.body, DocCur: "UZS", Items: req.body.DocumentLines, sap: false, CANCELED: 'N', DocStatus: 'O', UUID: uuidv4() }
             await Invoice.create(body)
             return res.status(201).json()
         }
@@ -443,6 +443,84 @@ class b1HANA {
             console.log(e)
             return res.status(404).json(e)
         }
+    }
+    updateInvoice = async (req, res, next) => {
+        try {
+            const uuid = req.params.id; // UUID ni oling
+            const body = {
+                ...req.body,
+                DocCur: "UZS",
+                Items: req.body.DocumentLines, // Hujjat chiziqlari
+                sap: false,
+                CANCELED: 'N',
+                DocStatus: 'O',
+            };
+
+            // Hujjatni yangilash
+            const updatedInvoice = await Invoice.findOneAndUpdate(
+                { UUID: uuid }, // Filtr
+                { $set: body }, // Yangilanish
+                { new: true, lean: true } // Yangilangan hujjatni qaytarish
+            );
+
+            if (updatedInvoice) {
+                return res.status(200).json(updatedInvoice); // Yangilangan hujjatni qaytarish
+            }
+
+            return res.status(404).json({ message: "Invoice not found" });
+        } catch (e) {
+            console.error(e); // Xatolarni konsolda chiqarish
+            return res.status(500).json({ error: "Failed to update invoice", details: e });
+        }
+    };
+
+
+
+    getLastCurrency = async (req, res, next) => {
+        let usd = await Currency.find({ Currency: "USD" })
+        if (usd.length) {
+            return res.status(200).json(usd[0])
+        }
+        let query = await DataRepositories.getLastCurrency()
+        const data = await this.execute(query);
+        return res.status(200).json(data[0])
+    }
+
+    getInvoiceById = async (req, res, next) => {
+        const filterOperation = validate(req.params.id)
+            ? { UUID: req.params.id }
+            : { DocEntry: req.params.id };
+
+        const invoice = await Invoice.findOne(filterOperation).lean();
+
+        if (invoice) {
+            const customer = await BusinessPartner.findOne({ CardCode: get(invoice, 'CardCode') }).lean();
+            const existingItems = await Item.find({
+                ItemCode: { $in: invoice.Items.map((item) => item.ItemCode) },
+            }).lean();
+
+            const result = {
+                ...invoice,
+                customer,
+                Items: invoice.Items.map((el) => {
+                    const existingItem = existingItems.find((item) => item.ItemCode === el.ItemCode); // To'g'ri elementni topish
+                    if (existingItem) {
+                        return {
+                            ...el,
+                            ...existingItem,
+                            OnHand: existingItem.OnHand?.find((el2) => el2.ListName === invoice.U_branch),
+                            PriceList: existingItem.PriceList?.find((el2) => el2.ListName === invoice.U_branch),
+                        };
+                    }
+                    return el; // Agar mos keladigan item topilmasa, asl elementni qaytaradi
+                }),
+            };
+
+            return res.status(200).json(result);
+        }
+
+        return res.status(200).json({});
+
     }
 }
 
