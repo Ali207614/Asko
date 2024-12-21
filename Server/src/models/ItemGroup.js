@@ -10,10 +10,3 @@ const ItemGroup = mongoose.model('ItemGroup', itemGroup);
 
 module.exports = ItemGroup;
 
-
-
-
-
-
-
-

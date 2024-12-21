@@ -85,7 +85,6 @@ const Home = () => {
 
     useEffect(() => {
         dispatch(setFilter({ limit, ts, search, filterProperty, activeData }));
-        console.log(Object.values(filterProperty).flat())
     }, [limit, ts, search, filterProperty, activeData])
 
 
@@ -203,6 +202,37 @@ const Home = () => {
         filterRef.current?.open(filterProperty, setFilterProperty);
     }
 
+
+    async function deleteInvoice(uuid) {
+        setUpdateLoading(true)
+        axios
+            .delete(
+                url + `/api/invoices/${uuid}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${get(getMe, 'token')}`,
+                    }
+                }
+            )
+            .then(({ data }) => {
+                setUpdateLoading(false)
+                getOrders({ page: 1, limit, filterProperty, value: search })
+                setTs(limit)
+                setPage(1);
+            })
+            .catch(err => {
+                setUpdateLoading(false)
+
+                if (get(err, 'response.status') == 401) {
+                    navigate('/login')
+                    return
+                }
+
+                errorNotify(get(err, 'response.data.message', `Ma'lumot O'chirishda xatolik yuz berdi`) || `Ma'lumot O'chirishda xatolik yuz berdi`)
+            });
+
+        return;
+    }
 
 
 
@@ -418,7 +448,7 @@ const Home = () => {
                                                                     }
                                                                 </button>
 
-                                                                <div className="dropdown-container" >
+                                                                {/* <div className="dropdown-container" >
                                                                     <button onClick={() => {
                                                                         setInvoiceDropDown(!invoiceDropDown)
                                                                         setDropdownOpen(false)
@@ -437,29 +467,18 @@ const Home = () => {
 
                                                                         </ul>
                                                                     )}
-                                                                </div>
-                                                                <div className="dropdown-container">
-                                                                    <button style={{ width: '110px' }} disabled={updateLoading} className="table-item-btn d-flex align table-item-text position-relative" onClick={() => {
-                                                                        setDropdownOpen(!dropdownOpen)
-                                                                        setInvoiceDropDown(false)
-                                                                    }}>
-                                                                        Состояние  {updateLoading ?
-                                                                            <div className="spinner-border" role="status">
-                                                                                <span className="sr-only">Loading...</span>
-                                                                            </div>
-                                                                            : <img style={{ marginLeft: '6px' }} src={editIcon} alt="arrow-right" />}
-                                                                    </button>
-                                                                    {(dropdownOpen) && (
-                                                                        <ul className="dropdown-menu">
-                                                                            {get(statuses, `${[get(item, 'U_status', '')]}.access`, []).map((status, i) => (
-                                                                                <li key={i} onClick={() => {
-
-                                                                                }} className={`dropdown-li ${get(item, 'U_status', '') == status ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{statuses[status].name}</a></li>
-                                                                            ))}
-
-                                                                        </ul>
-                                                                    )}
-                                                                </div>
+                                                                </div> */}
+                                                                {
+                                                                    get(item, 'UUID') ?
+                                                                        <div className="dropdown-container">
+                                                                            <button style={{ width: '93px' }} disabled={updateLoading} className="table-item-btn d-flex align table-item-text position-relative" onClick={() => deleteInvoice(item.UUID)}>
+                                                                                Удалить  {updateLoading ?
+                                                                                    <div className="spinner-border" role="status">
+                                                                                        <span className="sr-only">Loading...</span>
+                                                                                    </div>
+                                                                                    : <img style={{ marginLeft: '6px' }} src={editIcon} alt="arrow-right" />}
+                                                                            </button>
+                                                                        </div> : ''}
                                                             </div>
                                                         </li>
                                                     )

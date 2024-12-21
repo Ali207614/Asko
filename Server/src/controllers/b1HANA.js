@@ -13,6 +13,7 @@ const Item = require("../models/Item");
 const ItemGroup = require("../models/ItemGroup");
 const BusinessPartner = require("../models/BusinessPartner");
 const Currency = require("../models/Currency");
+const Merchant = require("../models/Merchant");
 require('dotenv').config();
 
 
@@ -283,13 +284,23 @@ class b1HANA {
                     // Umumiy hujjat sonini hisoblash
                     const totalDocuments = await Item.countDocuments(searchQuery);
 
-                    // Natijani qaytarish
-                    return res.status(200).json(documents.map(item => ({
-                        ...item,
-                        LENGTH: totalDocuments,
-                        OnHand: get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', '')),
-                        PriceList: get(item, 'PriceList', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
-                    })));
+                    const drafts = await Invoice.find({
+                        U_branch: get(req, 'user.U_branch', ''),
+                        sap: false,
+                        'Items.ItemCode': { $in: documents.map(item => item.ItemCode) },
+                    }).lean();
+
+                    return res.status(200).json(documents.map(item => {
+                        let onHandObj = get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
+                        let filteredItem = drafts.map(el => el.Items).flat().filter(el => el.ItemCode == item.ItemCode)
+
+                        return {
+                            ...item,
+                            LENGTH: totalDocuments,
+                            OnHand: { ...onHandObj, OnHand: filteredItem.length ? onHandObj.OnHand - filteredItem.reduce((a, b) => a + Number(b.Quantity), 0) : onHandObj.OnHand },
+                            PriceList: get(item, 'PriceList', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
+                        }
+                    }));
                 }
             }
             const query = await DataRepositories.getItems(req.query, req.user);
@@ -309,17 +320,27 @@ class b1HANA {
                 ...newItems.filter(item => item?.updateOne?.document).map(item => item.updateOne.document)
             ]
             if (get(req, 'query.status', '') == 'false') {
-                newItems = newItems.map(item => item.toObject());
+                newItems = newItems.map(item => item?.toObject());
             }
+            const drafts = await Invoice.find({
+                U_branch: get(req, 'user.U_branch', ''),
+                sap: false,
+                'Items.ItemCode': { $in: newItems.map(item => item.ItemCode) },
+            }).lean();
+
             return res.status(200).json(newItems.map(item => {
+                let onHandObj = get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
+                let filteredItem = drafts.map(el => el.Items).flat().filter(el => el.ItemCode == item.ItemCode)
+
                 return {
                     ...item,
-                    OnHand: get(item, 'OnHand', []).find(el => el.ListName == get(req, 'user.U_branch', '')),
+                    OnHand: { ...onHandObj, OnHand: filteredItem.length ? onHandObj.OnHand - filteredItem.reduce((a, b) => a + Number(b.Quantity), 0) : onHandObj.OnHand },
                     PriceList: get(item, 'PriceList', []).find(el => el.ListName == get(req, 'user.U_branch', ''))
-                };
+                }
             }));
         }
         catch (error) {
+            console.log(error)
             next(error); // Xatolikni middleware orqali qaytarish
         }
     };
@@ -444,6 +465,7 @@ class b1HANA {
             return res.status(404).json(e)
         }
     }
+
     updateInvoice = async (req, res, next) => {
         try {
             const uuid = req.params.id; // UUID ni oling
@@ -474,8 +496,6 @@ class b1HANA {
         }
     };
 
-
-
     getLastCurrency = async (req, res, next) => {
         let usd = await Currency.find({ Currency: "USD" })
         if (usd.length) {
@@ -483,6 +503,7 @@ class b1HANA {
         }
         let query = await DataRepositories.getLastCurrency()
         const data = await this.execute(query);
+        await Currency.create(data)
         return res.status(200).json(data[0])
     }
 
@@ -499,17 +520,27 @@ class b1HANA {
                 ItemCode: { $in: invoice.Items.map((item) => item.ItemCode) },
             }).lean();
 
+            const drafts = await Invoice.find({
+                U_branch: get(req, 'user.U_branch', ''),
+                sap: false,
+                'Items.ItemCode': { $in: existingItems.map(item => item.ItemCode) },
+            }).lean();
+
             const result = {
                 ...invoice,
                 customer,
                 Items: invoice.Items.map((el) => {
                     const existingItem = existingItems.find((item) => item.ItemCode === el.ItemCode); // To'g'ri elementni topish
+                    let filteredItem = drafts.map(i => i.Items).flat().filter(i => el.ItemCode == i.ItemCode)
+
+                    let existingOnHandObj = existingItem.OnHand?.find((el2) => el2.ListName === invoice.U_branch)
+                    let existingPriceListObj = existingItem.PriceList?.find((el2) => el2.ListName === invoice.U_branch)
                     if (existingItem) {
                         return {
                             ...el,
                             ...existingItem,
-                            OnHand: existingItem.OnHand?.find((el2) => el2.ListName === invoice.U_branch),
-                            PriceList: existingItem.PriceList?.find((el2) => el2.ListName === invoice.U_branch),
+                            OnHand: { ...existingOnHandObj, OnHand: filteredItem.length ? existingOnHandObj.OnHand - filteredItem.reduce((a, b) => a + Number(b.Quantity), 0) : existingOnHandObj.OnHand },
+                            PriceList: existingPriceListObj,
                         };
                     }
                     return el; // Agar mos keladigan item topilmasa, asl elementni qaytaradi
@@ -522,6 +553,33 @@ class b1HANA {
         return res.status(200).json({});
 
     }
+
+    getMerchant = async (req, res, next) => {
+        let merchant = await Merchant.find()
+        if (merchant.length) {
+            return res.status(200).json(merchant)
+        }
+        let query = await DataRepositories.getMerchant()
+        const data = await this.execute(query);
+        await Merchant.create(data)
+        return res.status(200).json(data)
+    }
+
+    deleteInvoice = async (req, res, next) => {
+        try {
+            const uuid = req.params.id; // URL dan ID ni olish
+            const result = await Invoice.deleteOne({ UUID: uuid }); // MongoDB query
+
+            if (result.deletedCount === 0) {
+                return res.status(404).json({ message: "Invoice not found" }); // Agar topilmasa
+            }
+
+            return res.status(200).json({ message: "Invoice deleted successfully" }); // Muvaffaqiyatli o'chirildi
+        } catch (error) {
+            next(error); // Xatolikni qayta ishlash uchun
+        }
+    };
+
 }
 
 module.exports = new b1HANA();

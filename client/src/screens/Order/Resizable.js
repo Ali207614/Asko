@@ -90,7 +90,10 @@ const Resizable = ({
             }
             return true
         }
-        ))
+        ).map(el => {
+            return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0) / 100) } }
+        }))
+
         setSearch(newSearchTerm);
     };
 
@@ -233,20 +236,11 @@ const Resizable = ({
 
                                     <div className='right-head' style={{ justifyContent: 'space-between' }}>
                                         <div className='footer-block'>
-                                            <p className='footer-text'>Сумма сделки USD : <span className='footer-text-spn'>
+                                            <p className='footer-text'>Сумма сделки : <span className='footer-text-spn'>
                                                 {
                                                     (state.length ? formatterCurrency(
                                                         state.reduce((a, b) => a + (
                                                             (Number(get(b, 'PriceList.Price', 0)) * Number(get(b, 'value', 1)))), 0)
-                                                        , 'USD') : 0)
-                                                }</span></p>
-                                        </div>
-                                        <div className='footer-block'>
-                                            <p className='footer-text'>Сумма сделки UZS : <span className='footer-text-spn'>
-                                                {
-                                                    (state.length ? formatterCurrency(
-                                                        state.reduce((a, b) => a + (
-                                                            (Number(get(b, 'PriceList.Price', 0)) * Number(get(b, 'value', 1)))), 0) * (get(getMe, 'currency.Rate', 1) || 1)
                                                         , 'UZS') : 0)
                                                 }</span></p>
                                         </div>
@@ -319,21 +313,22 @@ const Resizable = ({
                                     <div className='table-head'>
                                         <ul className='table-head-list d-flex align justify'>
                                             <li className='table-head-item w-50'>Код</li>
-                                            <li className='table-head-item w-100'>Продукция</li>
+                                            <li className='table-head-item w-70'>Продукция</li>
                                             <li className='table-head-item w-50'>Бранд</li>
                                             <li className='table-head-item w-50'>Мера</li>
                                             <li className='table-head-item w-50'>Цена</li>
+                                            <li className='table-head-item w-50'>Общая сумма</li>
                                             <li className='table-head-item w-50'>Остаток</li>
                                             <li className='table-head-item w-70'>Количество</li>
-                                            <li className='table-head-item w-70'>Скидка</li>
+                                            {/* <li className='table-head-item w-70'>Скидка</li> */}
                                             <li className='table-head-item w-47px'>
                                                 <button onClick={() => {
-                                                    setMainData([...state.map(item => {
+                                                    setMainData([...actualData.map(item => {
                                                         return { ...item, value: '', karobka: '' }
                                                     }), ...mainData]);
                                                     setState([]);
                                                     setActualData([]);
-                                                    setAllPageLength(allPageLength + state.length);
+                                                    setAllPageLength(allPageLength + actualData.length);
                                                     setAllPageLengthSelect(0);
                                                     setLimitSelect(10);
                                                     setPageSelect(1);
@@ -354,7 +349,7 @@ const Resizable = ({
                                                                 {get(item, 'ItemCode', '')}
                                                             </p>
                                                         </div>
-                                                        <div className='w-100 p-16' >
+                                                        <div className='w-70 p-16' >
                                                             <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                                                 {get(item, 'ItemName', '') || '-'}
                                                             </p>
@@ -371,7 +366,12 @@ const Resizable = ({
                                                         </div>
                                                         <div className='w-50 p-16' >
                                                             <p className='table-body-text 50'>
-                                                                {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), get(item, 'Currency', "USD") || 'USD')}
+                                                                {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), 'UZS')}
+                                                            </p>
+                                                        </div>
+                                                        <div className='w-50 p-16' >
+                                                            <p className='table-body-text 50'>
+                                                                {formatterCurrency(Number(get(item, 'PriceList.Price', 0)) * get(item, 'value'), 'UZS')}
                                                             </p>
                                                         </div>
                                                         <div className='w-50 p-16' >
@@ -395,7 +395,7 @@ const Resizable = ({
                                                                     placeholder='-' />
                                                             </p>
                                                         </div>
-                                                        <div className='w-70 p-16'>
+                                                        {/* <div className='w-70 p-16'>
                                                             <p className='table-body-text'>
                                                                 <input
                                                                     ref={(el) => (inputRefs.current[i] = el)}
@@ -410,12 +410,12 @@ const Resizable = ({
                                                                     className={`table-body-inp bg-white ${(isEmpty && item?.value.length === 0) ? 'borderRed' : ''}`}
                                                                     placeholder='-' />
                                                             </p>
-                                                        </div>
+                                                        </div> */}
                                                         <div className='w-47px p-16'>
                                                             <button onClick={() => {
                                                                 setState([...state.filter(el => get(el, 'ItemCode') !== get(item, 'ItemCode'))]);
+                                                                setMainData([{ ...item, value: '', karobka: '', PriceList: actualData.filter(el => get(el, 'ItemCode') == get(item, 'ItemCode')).PriceList }, ...mainData]);
                                                                 setActualData([...actualData.filter(el => get(el, 'ItemCode') !== get(item, 'ItemCode'))]);
-                                                                setMainData([{ ...item, value: '', karobka: '' }, ...mainData]);
                                                                 setAllPageLength(allPageLength + 1);
                                                                 setAllPageLengthSelect(allPageLengthSelect - 1);
                                                             }} className='table-body-text table-head-check-btn'>

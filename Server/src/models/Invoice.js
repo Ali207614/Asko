@@ -10,7 +10,7 @@ const InvoiceSchema = new Schema({
     DocStatus: { type: String, enum: ['O', 'C'], required: true }, // Holat (Ochilgan yoki yopilgan)
     DocDate: { type: Date, required: true },    // Hujjat sanasi
     DocDueDate: { type: Date, required: false }, // To'lov muddati
-    Comments: { type: String, required: true }, // Mijoz kodi
+    Comments: { type: String, required: false }, // Mijoz kodi
     CardCode: { type: String, required: true }, // Mijoz kodi
     CardName: { type: String, required: true }, // Mijoz nomi
     Phone1: { type: String, required: false }, // Mijoz nomi
@@ -22,6 +22,8 @@ const InvoiceSchema = new Schema({
     SlpCode: { type: Number, required: false },  // Sotuvchi kodi
     U_branch: { type: String, required: false }, // Filial kodi
     U_car: { type: String, required: false }, // Filial kodi
+    U_merchantId: { type: String, required: false }, // Filial kodi
+    U_merchantFoiz: { type: String, required: false }, // Filial kodi
     sap: { type: Boolean, default: true },
     Items: [
         {

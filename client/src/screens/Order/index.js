@@ -36,6 +36,16 @@ const override = {
   top: "50%",
 };
 
+let merchants = {
+  '01': "UZUM X12",
+  '02': "UZUM X6",
+  '03': "PAYME NASIYA",
+  '04': "ALIF X6 X12",
+  '05': "ZOOD X12",
+  '06': "ZOOD X6",
+  '07': "UZUM X3",
+  '08': "ZOOD X4"
+}
 const Order = () => {
   const { getMe } = useSelector(state => state.main);
 
@@ -81,11 +91,14 @@ const Order = () => {
   const [salesPersonCode, setSalesPersonCode] = useState(-1)
 
   const [showDropDownStatus, setShowDropdownStatus] = useState(false)
+  const [showDropDownMerchant, setShowDropdownMerchant] = useState(false)
   const [comment, setComment] = useState('')
   const [logist, setLogist] = useState()
 
   const [filterData, setFilterData] = useState([])
   const [groups, setGroups] = useState([])
+
+  const [merchantList, setMerchantList] = useState([])
 
   const [filterProperty, setFilterProperty] = useState({})
   const [filterPropertyResize, setFilterPropertyResize] = useState({})
@@ -123,6 +136,9 @@ const Order = () => {
   }
 
 
+  useEffect(() => {
+    getMerchant()
+  }, []);
 
 
 
@@ -158,6 +174,9 @@ const Order = () => {
     }
     else {
       setCustomerData([])
+      if (!get(docEntry, 'id')) {
+        setCustomerDataInvoice({})
+      }
     }
     return () => {
       clearTimeout(timeoutId);
@@ -288,7 +307,11 @@ const Order = () => {
             setLoading(false)
             setCustomer(get(orderData, 'CardName', ''))
             setCustomerCode(get(orderData, 'CardCode', ''))
-            setCustomerDataInvoice({ ...get(orderData, 'customer'), selectCar: orderData.U_car })
+            setCustomerDataInvoice({
+              ...get(orderData, 'customer'), selectCar: orderData.U_car,
+              selectMerchantId: get(orderData, 'U_merchantId'),
+              selectMarchantFoiz: get(orderData, 'U_merchantFoiz')
+            })
 
             setSalesPerson(get(orderData, 'SLP'))
             setSalesPersonCode(get(orderData, 'SlpCode'))
@@ -302,24 +325,25 @@ const Order = () => {
             setAllPageLength(get(data, '[0].LENGTH', 0) - orderData.Items.length)
 
             setMainData(data.map(item => {
-              return { ...item, value: '', Discount: '' }
+              return { ...item, value: '', Discount: '', PriceList: { ...item.PriceList, Price: Number(get(item, 'PriceList.Price', 0)) * get(getMe, 'currency.Rate') } }
             }).filter(el => !orderData.Items.map(item => item.ItemCode).includes(get(el, 'ItemCode'))))
 
 
             setState(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString() }
+            }).map(el => {
+              return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantFoiz', 1) || 1) / 100) } }
             }))
             setActualData(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString() }
             }))
-
           })
         }
         else {
           setLoading(false)
 
           setMainData(data.map(item => {
-            return { ...item, value: '', Discount: '' }
+            return { ...item, value: '', Discount: '', PriceList: { ...item.PriceList, Price: Number(get(item, 'PriceList.Price', 0)) * get(getMe, 'currency.Rate') } }
           }))
           setAllPageLength(get(data, '[0].LENGTH', 0))
           if (groups.length == 0) {
@@ -355,12 +379,32 @@ const Order = () => {
     return;
   };
 
+  function getMerchant() {
+    axios
+      .get(
+        url + `/api/getMerchant`,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
+      )
+      .then(({ data }) => {
+        setMerchantList(data)
+      })
+      .catch(err => {
+        errorNotify("Tovarlarni yuklashda muommo yuzaga keldi")
+      });
+
+    return;
+  };
+
 
   const addState = (item) => {
     setAllPageLengthSelect(allPageLengthSelect + 1)
     setAllPageLength(allPageLength - 1)
     setMainData(mainData.filter(el => get(el, 'ItemCode', '') !== get(item, 'ItemCode', '')))
-    setState([item, ...state])
+    setState([{ ...item, PriceList: { ...item.PriceList, Price: Number(item.PriceList.Price || 0) + ((item.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0) / 100) } }, ...state])
     setActualData([item, ...actualData])
   }
 
@@ -425,18 +469,25 @@ const Order = () => {
       "Comments": comment,
       "U_branch": get(getMe, 'data.U_branch'),
       "U_car": get(customerDataInvoice, 'selectCar'),
-      "DocTotal": actualData.reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 1) || 1) * Number(get(b, 'value', 1))), 0),
-      "DocumentLines": actualData.map(item => {
+      "U_merchantId": get(customerDataInvoice, 'selectMerchantId'),
+      "U_merchantFoiz": get(customerDataInvoice, 'selectMarchantFoiz'),
+      "DocTotal": actualData.map(el => {
+        return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
+      }).reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
+      "DocumentLines": actualData.map(el => {
+        return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
+      }).map(item => {
         let obj = {
           "ItemCode": get(item, 'ItemCode', ''),
           "Dscription": get(item, 'ItemName', ''),
           "Quantity": Number(get(item, 'value', 0)),
           "WarehouseCode": get(getMe, 'data.U_branch'),
+          "Price": get(item, 'PriceList.Price')
         }
-
         return obj
       })
     }
+
     let body = schema
     axios
       .post(
@@ -489,19 +540,24 @@ const Order = () => {
       "Comments": comment,
       "U_branch": get(getMe, 'data.U_branch'),
       "U_car": get(customerDataInvoice, 'selectCar'),
-      "DocTotal": actualData.reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 1) || 1) * Number(get(b, 'value', 1))), 0) * get(getMe, 'currency.Rate', 1) || 1,
-      "DocumentLines": actualData.map(item => {
+      "U_merchantId": get(customerDataInvoice, 'selectMerchantId'),
+      "U_merchantFoiz": get(customerDataInvoice, 'selectMarchantFoiz'),
+      "DocTotal": actualData.map(el => {
+        return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
+      }).reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
+      "DocumentLines": actualData.map(el => {
+        return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
+      }).map(item => {
         let obj = {
           "ItemCode": get(item, 'ItemCode', ''),
           "Dscription": get(item, 'ItemName', ''),
           "Quantity": Number(get(item, 'value', 0)),
           "WarehouseCode": get(getMe, 'data.U_branch'),
+          "Price": get(item, 'PriceList.Price')
         }
-
         return obj
       })
     }
-
     let body = schema
     setOrderLoading(true)
     axios
@@ -622,9 +678,8 @@ const Order = () => {
                         <li onClick={() => {
                           setCustomer(get(customerItem, 'CardName', ''))
                           setCustomerCode(get(customerItem, 'CardCode', ''))
-                          setCustomerDataInvoice(customerData.find(e => get(e, 'CardCode', '') == get(customerItem, 'CardCode', '')))
                           setCustomerData([])
-                          getCars(get(customerItem, 'CardCode', ''), customerData.find(e => get(e, 'CardCode', '') == get(customerItem, 'CardCode', '')))
+                          getCars(get(customerItem, 'CardCode', ''), { ...customerDataInvoice, ...customerData.find(e => get(e, 'CardCode', '') == get(customerItem, 'CardCode', '')) })
                         }} key={i} className={`dropdown-li`}><a className="dropdown-item" href="#">
                             {get(customerItem, 'CardCode', '') || '-'} - {get(customerItem, 'CardName', '') || '-'}
                           </a></li>
@@ -668,12 +723,12 @@ const Order = () => {
                     </ul>
                   </div>
 
-                  <div className='right-limit' >
+                  <div className='right-limit' style={{ marginLeft: '20px' }}>
                     <button style={{ width: "200px" }} onClick={() => setShowDropdownStatus(!showDropDownStatus)} className={`right-dropdown`}>
                       <p className='right-limit-text'>{get(customerDataInvoice, 'selectCar', '-') || '-'}</p>
                       <img src={arrowDown} className={showDropDownStatus && get(customerDataInvoice, 'Cars', []).length ? "up-arrow" : ""} alt="arrow-down-img" />
                     </button>
-                    <ul style={{ zIndex: 1, width: '240px' }} className={`dropdown-menu  ${(showDropDownStatus && get(customerDataInvoice, 'Cars', []).length) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                    <ul style={{ zIndex: 1, width: '240px' }} className={`dropdown-menu  ${(showDropDownStatus) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
                       {
                         [{ U_car_code: '' }, ...get(customerDataInvoice, 'Cars', [])].map((item, i) => {
                           return (<li style={{ height: '30px' }} key={i} onClick={() => {
@@ -684,6 +739,35 @@ const Order = () => {
                             }
                             return
                           }} className={`dropdown-li ${get(customerDataInvoice, 'selectCar') == get(item, 'U_car_code') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'U_car_name', '')}  -  {get(item, 'U_car_code', '')}</a></li>)
+                        })
+                      }
+                    </ul>
+                  </div>
+
+                  <div className='right-limit' style={{ marginLeft: '20px' }}>
+                    <button style={{ width: "200px" }} onClick={() => {
+                      setShowDropdownMerchant(!showDropDownMerchant)
+                    }
+                    } className={`right-dropdown`}>
+                      <p className='right-limit-text'>{merchants[get(customerDataInvoice, 'selectMerchantId')] || 'Naqd'} - {get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0} %</p>
+                      <img src={arrowDown} className={showDropDownMerchant ? "up-arrow" : ""} alt="arrow-down-img" />
+                    </button>
+                    <ul style={{ zIndex: 1, width: '240px' }} className={`dropdown-menu  ${(showDropDownMerchant) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                      {
+                        [{ U_merchant: '' }, ...merchantList].map((item, i) => {
+
+                          return (<li style={{ height: '30px' }} key={i} onClick={() => {
+                            if (get(customerDataInvoice, 'selectMerchantId') != get(item, 'U_merchant')) {
+                              setState(actualData.filter(el => state.map(itemC => itemC.ItemCode).includes(el.ItemCode)).map(el => {
+                                return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(item, 'U_Foiz', 0) || 0) / 100) } }
+                              }))
+
+                              setCustomerDataInvoice({ ...customerDataInvoice, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz') })
+                              setShowDropdownMerchant(false)
+                              return
+                            }
+                            return
+                          }} className={`dropdown-li ${get(customerDataInvoice, 'selectMerchantId') == get(item, 'U_merchant') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{merchants[get(item, 'U_merchant')] || 'Naqd'} - {get(item, 'U_Foiz', '0') || 0} %</a></li>)
                         })
                       }
                     </ul>
@@ -779,7 +863,9 @@ const Order = () => {
                         setAllPageLengthSelect(allPageLengthSelect + filterData.length)
                         setAllPageLength(allPageLength - filterData.length)
                         setMainData(mainData.filter(el => !filterData.map(item => item.ItemCode).includes(el.ItemCode)))
-                        setState([...filterData, ...state])
+                        setState([...filterData.map(el => {
+                          return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
+                        }), ...state])
                         setActualData([...filterData, ...actualData])
                       }
 
@@ -821,7 +907,7 @@ const Order = () => {
                                   </div>
                                   <div className='w-50 p-16' >
                                     <p className='table-body-text 50'>
-                                      {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), get(item, 'Currency', "USD") || 'USD')}
+                                      {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), 'UZS')}
                                     </p>
                                   </div>
                                   <div className='w-50 p-16' >

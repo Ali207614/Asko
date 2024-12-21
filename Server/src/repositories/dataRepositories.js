@@ -188,6 +188,11 @@ class DataRepositories {
         WHERE T0."RateDate" = CURRENT_DATE and T0."Currency"='USD'`
         return sql
     }
+
+    getMerchant() {
+        let sql = `SELECT T0."Code", T0."U_merchant", T0."U_Foiz", T0."U_schot" FROM ${this.db}."@MERCHANT"  T0`
+        return sql
+    }
 }
 
 module.exports = new DataRepositories(db);

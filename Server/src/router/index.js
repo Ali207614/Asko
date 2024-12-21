@@ -18,12 +18,17 @@ router.post('/api/business-partner', authMiddleware, b1SL.createBusinessPartner)
 router.put('/api/business-partner', authMiddleware, b1SL.updateBusinessPartner);
 
 router.get('/api/items', authMiddleware, b1HANA.items);
+
 router.get('/api/invoices', authMiddleware, b1HANA.invoices);
+router.delete('/api/invoices/:id', authMiddleware, b1HANA.deleteInvoice);
+
 router.get('/api/group', authMiddleware, b1HANA.groups);
 router.get('/api/business-partner', authMiddleware, b1HANA.businessPartners);
 router.get('/api/cars', authMiddleware, b1HANA.getCars);
 
 router.get('/api/getCurrency', authMiddleware, b1HANA.getLastCurrency);
+
+router.get('/api/getMerchant', authMiddleware, b1HANA.getMerchant);
 
 // router.get('/b1s/v1/:path', b1SL.proxyFunc);
 // router.post('/b1s/v1/:path', b1SL.proxyFunc);
