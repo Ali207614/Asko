@@ -20,6 +20,7 @@ router.put('/api/business-partner', authMiddleware, b1SL.updateBusinessPartner);
 router.get('/api/items', authMiddleware, b1HANA.items);
 
 router.get('/api/invoices', authMiddleware, b1HANA.invoices);
+router.post('/api/invoices', authMiddleware, b1SL.postInvoices);
 router.delete('/api/invoices/:id', authMiddleware, b1HANA.deleteInvoice);
 
 router.get('/api/group', authMiddleware, b1HANA.groups);

@@ -309,8 +309,8 @@ const Order = () => {
             setCustomerCode(get(orderData, 'CardCode', ''))
             setCustomerDataInvoice({
               ...get(orderData, 'customer'), selectCar: orderData.U_car,
-              selectMerchantId: get(orderData, 'U_merchantId'),
-              selectMarchantFoiz: get(orderData, 'U_merchantFoiz')
+              selectMerchantId: get(orderData, 'U_merchantturi'),
+              selectMarchantFoiz: get(orderData, 'U_merchantfoizi')
             })
 
             setSalesPerson(get(orderData, 'SLP'))
@@ -332,10 +332,10 @@ const Order = () => {
             setState(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString() }
             }).map(el => {
-              return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantFoiz', 1) || 1) / 100) } }
+              return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 1) || 1) / 100) } }
             }))
             setActualData(orderData.Items.map(item => {
-              return { ...item, value: Number(item.Quantity).toString() }
+              return { ...item, value: Number(item.Quantity).toString(), PriceList: { ...item.PriceList, Price: Number(item.PriceList.Price || 0) * get(getMe, 'currency.Rate') } }
             }))
           })
         }
@@ -469,8 +469,8 @@ const Order = () => {
       "Comments": comment,
       "U_branch": get(getMe, 'data.U_branch'),
       "U_car": get(customerDataInvoice, 'selectCar'),
-      "U_merchantId": get(customerDataInvoice, 'selectMerchantId'),
-      "U_merchantFoiz": get(customerDataInvoice, 'selectMarchantFoiz'),
+      "U_merchantturi": get(customerDataInvoice, 'selectMerchantId'),
+      "U_merchantfoizi": get(customerDataInvoice, 'selectMarchantFoiz'),
       "DocTotal": actualData.map(el => {
         return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
       }).reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
@@ -540,13 +540,13 @@ const Order = () => {
       "Comments": comment,
       "U_branch": get(getMe, 'data.U_branch'),
       "U_car": get(customerDataInvoice, 'selectCar'),
-      "U_merchantId": get(customerDataInvoice, 'selectMerchantId'),
-      "U_merchantFoiz": get(customerDataInvoice, 'selectMarchantFoiz'),
+      "U_merchantturi": get(customerDataInvoice, 'selectMerchantId'),
+      "U_merchantfoizi": get(customerDataInvoice, 'selectMarchantFoiz'),
       "DocTotal": actualData.map(el => {
-        return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
+        return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
       }).reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
       "DocumentLines": actualData.map(el => {
-        return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
+        return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
       }).map(item => {
         let obj = {
           "ItemCode": get(item, 'ItemCode', ''),
@@ -749,7 +749,7 @@ const Order = () => {
                       setShowDropdownMerchant(!showDropDownMerchant)
                     }
                     } className={`right-dropdown`}>
-                      <p className='right-limit-text'>{merchants[get(customerDataInvoice, 'selectMerchantId')] || 'Naqd'} - {get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0} %</p>
+                      <p className='right-limit-text'>{get(customerDataInvoice, 'selectMerchantId') || 'Naqd'} - {get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0} %</p>
                       <img src={arrowDown} className={showDropDownMerchant ? "up-arrow" : ""} alt="arrow-down-img" />
                     </button>
                     <ul style={{ zIndex: 1, width: '240px' }} className={`dropdown-menu  ${(showDropDownMerchant) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
@@ -767,7 +767,7 @@ const Order = () => {
                               return
                             }
                             return
-                          }} className={`dropdown-li ${get(customerDataInvoice, 'selectMerchantId') == get(item, 'U_merchant') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{merchants[get(item, 'U_merchant')] || 'Naqd'} - {get(item, 'U_Foiz', '0') || 0} %</a></li>)
+                          }} className={`dropdown-li ${get(customerDataInvoice, 'selectMerchantId') == get(item, 'U_merchant') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'U_merchant') || 'Naqd'} - {get(item, 'U_Foiz', '0') || 0} %</a></li>)
                         })
                       }
                     </ul>

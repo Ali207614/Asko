@@ -580,6 +580,30 @@ class b1HANA {
         }
     };
 
+    getInvoiceByDocEntry = async (doc) => {
+        let query = await DataRepositories.getInvoiceByDocEntry(doc);
+        const data = await this.execute(query);
+        let newInvoices = [];
+
+        if (data.length) {
+            let docs = [...new Set(data.map(item => item.DocEntry))];
+            let mapped = docs.map(item => ({
+                ...data.find(el => el.DocEntry === item),
+                Items: data.filter(el => el.DocEntry === item),
+            }));
+
+            for (const invoice of mapped) {
+                const existingInvoice = await Invoice.findOne({ DocEntry: invoice.DocEntry });
+                if (existingInvoice) {
+                    await Invoice.updateOne({ DocEntry: invoice.DocEntry }, { $set: invoice });
+                } else {
+                    await Invoice.create(invoice);
+                }
+            }
+        }
+
+    }
+
 }
 
 module.exports = new b1HANA();

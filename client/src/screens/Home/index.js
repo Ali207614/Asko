@@ -16,7 +16,7 @@ import { get } from 'lodash';
 import formatterCurrency from '../../helpers/currency';
 import moment from 'moment';
 import { FadeLoader } from "react-spinners";
-import { ConfirmModal, ErrorModal, ConfirmModalOrder, FilterOrderModal } from '../../components/Modal';
+import { ConfirmModal, ErrorModal, ConfirmModalOrder, FilterOrderModal, IncomingPayment } from '../../components/Modal';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { errorNotify, successNotify, warningNotify, limitList, override, statuses } from '../../components/Helper';
@@ -62,6 +62,12 @@ const Home = () => {
     const errorRef = useRef();
 
     const filterRef = useRef();
+
+    const incomingRef = useRef();
+
+    const incomingPaymentRef = useCallback(ref => {
+        incomingRef.current = ref;
+    }, []);
 
     const filterModalRef = useCallback(ref => {
         filterRef.current = ref;
@@ -191,10 +197,6 @@ const Home = () => {
 
         return;
     };
-
-
-
-
 
 
 
@@ -447,6 +449,12 @@ const Home = () => {
                                                                         )
                                                                     }
                                                                 </button>
+                                                                <button onClick={() => {
+                                                                    console.log('bosildi')
+                                                                    incomingRef.current?.open(item);
+                                                                }} className='table-item-btn d-flex align'>
+                                                                    Оплата <img src={editIcon} alt="arrow right" />
+                                                                </button>
 
                                                                 {/* <div className="dropdown-container" >
                                                                     <button onClick={() => {
@@ -520,6 +528,14 @@ const Home = () => {
                     arg={{ page: 1, limit, value: search }}
                     setPage={setPage}
                     setTs={setTs}
+                />
+                <IncomingPayment
+                    getRef={incomingPaymentRef}
+                    getOrders={getOrders}
+                    page={page}
+                    limit={limit}
+                    search={search}
+                    filterProperty={filterProperty}
                 />
                 <ErrorModal
                     getRef={getErrorRef}

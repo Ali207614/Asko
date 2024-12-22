@@ -56,6 +56,10 @@ class DataRepositories {
 
         return `
             SELECT (${lengthQuery}) as length, 
+                    T0."U_merchantturi",
+                    T0."U_merchantfoizi",
+                    T0."U_flayer",
+                    T0."U_vulkanizatsiya",
                    T2."Phone1",
                    T2."Phone2",
                    T0."DocEntry", 
@@ -191,6 +195,44 @@ class DataRepositories {
 
     getMerchant() {
         let sql = `SELECT T0."Code", T0."U_merchant", T0."U_Foiz", T0."U_schot" FROM ${this.db}."@MERCHANT"  T0`
+        return sql
+    }
+
+    getInvoiceByDocEntry(doc) {
+        let sql = `SELECT
+        T0."U_merchantturi",
+        T0."U_merchantfoizi",
+        T0."U_flayer",
+        T0."U_vulkanizatsiya",
+       T2."Phone1",
+       T2."Phone2",
+       T0."DocEntry", 
+       T0."U_car", 
+       T0."DocNum", 
+       T0."DocType", 
+       T0."CANCELED", 
+       T0."DocStatus", 
+       T0."DocDate", 
+       T0."DocDueDate", 
+       T0."CardCode", 
+       T0."CardName", 
+       T0."DocCur", 
+       T0."DocRate", 
+       T0."DocTotal", 
+       T0."PaidToDate", 
+       T0."SlpCode", 
+       T0."U_branch",
+       T1."ItemCode", 
+       T1."Dscription", 
+       T1."Quantity", 
+       T1."Price", 
+       T1."DiscPrcnt", 
+       T1."LineTotal"
+FROM ${this.db}.OINV T0
+INNER JOIN ${this.db}.INV1 T1 ON T1."DocEntry" = T0."DocEntry"
+INNER JOIN ${this.db}.OCRD T2 ON T0."CardCode" = T2."CardCode"
+  AND T0."CANCELED" = 'N' 
+  AND (T0."DocStatus" = 'O' OR T0."DocStatus" = 'C') and T0."DocEntry" = '${doc}'`
         return sql
     }
 }

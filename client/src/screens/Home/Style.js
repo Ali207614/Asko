@@ -300,7 +300,7 @@ const Style = styled.div`
     width: 105px;
   }
   .status-button{
-    width: 105px;
+    width: 145px;
   }
   .status-button{
     font-family: "Inter Tight";
@@ -311,7 +311,7 @@ const Style = styled.div`
     border-radius:  32px;
     border:none;
     outline:none;
-    padding: 5px 12px;
+    padding: 7px 12px;
   }
 
 

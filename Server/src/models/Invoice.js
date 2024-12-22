@@ -22,8 +22,10 @@ const InvoiceSchema = new Schema({
     SlpCode: { type: Number, required: false },  // Sotuvchi kodi
     U_branch: { type: String, required: false }, // Filial kodi
     U_car: { type: String, required: false }, // Filial kodi
-    U_merchantId: { type: String, required: false }, // Filial kodi
-    U_merchantFoiz: { type: String, required: false }, // Filial kodi
+    U_merchantturi: { type: String, required: false }, // Filial kodi
+    U_merchantfoizi: { type: String, required: false }, // Filial kodi
+    U_flayer: { type: String, required: false }, // Filial kodi
+    U_vulkanizatsiya: { type: String, required: false }, // Filial kodi
     sap: { type: Boolean, default: true },
     Items: [
         {

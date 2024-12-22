@@ -5,10 +5,10 @@ let dbService = require('../services/dbService')
 
 const moment = require('moment');
 const { getSession, saveSession } = require("../helpers");
-const { } = require("../repositories/dataRepositories");
 const { api_params } = require("../config");
 const b1HANA = require("./b1HANA");
 const BusinessPartner = require("../models/BusinessPartner");
+const Invoice = require("../models/Invoice");
 require('dotenv').config();
 
 
@@ -163,6 +163,7 @@ class b1SL {
                 }
             });
     }
+
     createBusinessPartner = async (req, res, next) => {
         let body = req.body
         body = { ...req.body, "Series": 83, }
@@ -197,6 +198,120 @@ class b1SL {
                 }
             });
     }
+
+
+    postInvoices = async (req, res, next) => {
+        let body = req.body
+        if (get(body, 'DocEntry') && get(body, 'sap')) {
+            let incoming = await this.postIncomingPayment(body, 5010)
+            return res.status(get(incoming, 'status')).json(incoming)
+        }
+        let schema = {
+            "CardCode": get(body, 'CardCode'),
+            "DocDate": get(body, 'DocDate'),
+            "DocDueDate": get(body, 'DocDueDate'),
+            "Comments": get(body, 'Comments'),
+            "U_branch": get(body, 'U_branch'),
+            "DocCurrency": "UZS",
+            "U_car": get(body, 'U_car', ''),
+            "U_merchantturi": get(body, 'U_merchantturi', ''),
+            "U_merchantfoizi": get(body, 'U_merchantfoizi', ''),
+            "U_flayer": get(body, 'U_flayer2') ? 'Да' : "Нет",
+            "U_vulkanizatsiya": "Нет",
+            "DocumentLines": get(body, 'Items', []).map(item => {
+                return {
+                    ItemCode: item.ItemCode,
+                    Quantity: item.Quantity,
+                    Price: item.Price * item.Quantity,
+                    UnitPrice: item.Price,
+                    WarehouseCode: get(body, 'U_branch'),
+                    CostingCode: get(body, 'U_branch')
+                }
+            })
+        }
+        const axios = Axios.create({
+            baseURL: `${this.api}`,
+            timeout: 30000,
+            headers: {
+                'Cookie': get(getSession(), 'Cookie[0]', '') + get(getSession(), 'Cookie[1]', ''),
+                'SessionId': get(getSession(), 'SessionId', '')
+            },
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+        });
+        return axios
+            .post(`/Invoices`, schema)
+            .then(async ({ data }) => {
+                await Invoice.deleteOne({ UUID: req.body.UUID })
+                if (get(body, 'U_flayer2')) {
+                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: 30000 }, 5010)
+                }
+
+                let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry') })
+                return res.status(incoming?.status).json(incoming)
+            })
+            .catch(async (err) => {
+                if (get(err, 'response.status') == 401) {
+                    let token = await this.auth()
+                    if (token.status) {
+                        return await this.postInvoices(req, res, next)
+                    }
+                    return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
+                } else {
+                    return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
+
+                }
+            });
+    }
+
+    postIncomingPayment = async (body, account = 5010) => {
+        let schema = {
+            "CardCode": get(body, 'CardCode'),
+            "CashAccount": account,
+            "DocCurrency": "UZS",
+            "CashSum": get(body, 'value'),
+            "PaymentInvoices": [
+                {
+                    "SumApplied": get(body, 'value'),
+                    "DocEntry": get(body, 'DocEntry'),
+                }
+            ],
+        }
+
+        console.log(schema, ' bu body')
+        const axios = Axios.create({
+            baseURL: `${this.api}`,
+            timeout: 30000,
+            headers: {
+                'Cookie': get(getSession(), 'Cookie[0]', '') + get(getSession(), 'Cookie[1]', ''),
+                'SessionId': get(getSession(), 'SessionId', '')
+            },
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+        });
+        return axios
+            .post(`/IncomingPayments`, schema)
+            .then(async ({ data }) => {
+                console.log('bu joyga tushgan')
+                await b1HANA.getInvoiceByDocEntry(get(body, 'DocEntry'))
+                return { status: 201 }
+            })
+            .catch(async (err) => {
+                if (get(err, 'response.status') == 401) {
+                    let token = await this.auth()
+                    if (token.status) {
+                        return await this.postIncomingPayment(body, account)
+                    }
+                    return { status: get(err, 'response.status'), message: err }
+                } else {
+                    console.log(err)
+                    return { status: get(err, 'response.status'), message: err }
+                }
+            });
+    }
+
 
 }
 
