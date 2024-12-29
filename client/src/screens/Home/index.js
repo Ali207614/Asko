@@ -269,7 +269,8 @@ const Home = () => {
                     <div className='container'>
                         <div className='head'>
                             <div className='left-head d-flex align'>
-                                <h3 className='left-title'>Заказы</h3>
+                                <h3 className='left-title'>
+                                    Продажа</h3>
                             </div>
                             <div className='right-head'>
 
@@ -344,9 +345,9 @@ const Home = () => {
                                 </div>
 
 
-                                <button onClick={() => navigate('/invoice')} className='btn-head'>
+                                {get(getMe, 'data.U_role') == 'Salesperson' && <button onClick={() => navigate('/invoice')} className='btn-head'>
                                     Добавить
-                                </button>
+                                </button>}
                             </div>
                         </div>
                         <div className='table'>
@@ -449,12 +450,11 @@ const Home = () => {
                                                                         )
                                                                     }
                                                                 </button>
-                                                                <button onClick={() => {
-                                                                    console.log('bosildi')
+                                                                {get(getMe, 'data.U_role') == 'Cashier' && <button onClick={() => {
                                                                     incomingRef.current?.open(item);
                                                                 }} className='table-item-btn d-flex align'>
                                                                     Оплата <img src={editIcon} alt="arrow right" />
-                                                                </button>
+                                                                </button>}
 
                                                                 {/* <div className="dropdown-container" >
                                                                     <button onClick={() => {

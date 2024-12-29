@@ -244,7 +244,17 @@ const Resizable = ({
                                                         , 'UZS') : 0)
                                                 }</span></p>
                                         </div>
+                                        <div className='footer-block'>
+                                            <p className='footer-text'>Итог количество : <span className='footer-text-spn'>
+                                                {
+                                                    (state.length ?
+                                                        state.reduce((a, b) => a + (
+                                                            (Number(get(b, 'value', 0)))), 0)
+                                                        : 0)
+                                                }</span></p>
+                                        </div>
                                     </div>
+
 
                                     <div style={{ display: 'flex' }}>
                                         <div className='right-pagination'>

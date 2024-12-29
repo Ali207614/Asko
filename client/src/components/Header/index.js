@@ -32,7 +32,8 @@ const Header = () => {
                         return `list-item-link ${isActive ? 'opacity-1' : ''}`;
                       }}
                     >
-                      Заказ
+
+                      Продажа
                     </NavLink>
                   </li>
                 </ul>

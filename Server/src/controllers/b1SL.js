@@ -245,9 +245,9 @@ class b1SL {
             .then(async ({ data }) => {
                 await Invoice.deleteOne({ UUID: req.body.UUID })
                 if (get(body, 'U_flayer2')) {
-                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: 30000 }, 5010)
+                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: 30000 }, 9410)
                 }
-
+                let items = await b1HANA.getInvoiceItems(get(body, 'Items', []).map(item => item.ItemCode), get(body, 'U_branch'))
                 let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry') })
                 return res.status(incoming?.status).json(incoming)
             })
@@ -259,6 +259,7 @@ class b1SL {
                     }
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
                 } else {
+                    console.log(err, ' bu err')
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
 
                 }

@@ -9,7 +9,7 @@ class DataRepositories {
     // OPCH so'rovini qaytaradi
     getSalesManager({ login = '', password = '' }) {
         return `
-        SELECT T0."SlpCode", T0."SlpName", T0."GroupCode", T0."Telephone", T0."U_login", T0."U_password", T0."U_branch" FROM ${this.db}.OSLP T0 where T0."U_login"= '${login}' and T0."U_password"='${password}'`;
+        SELECT T0."SlpCode", T0."SlpName", T0."GroupCode", T0."Telephone", T0."U_login", T0."U_password", T0."U_branch" ,T0."U_role" FROM ${this.db}.OSLP T0 where T0."U_login"= '${login}' and T0."U_password"='${password}'`;
     }
 
     getInvoices({ offset = '1', limit = '1', status = 'false', statusPay = '', docDateStart, docDateEnd, search }, { U_branch, SlpCode }) {
@@ -233,6 +233,35 @@ INNER JOIN ${this.db}.INV1 T1 ON T1."DocEntry" = T0."DocEntry"
 INNER JOIN ${this.db}.OCRD T2 ON T0."CardCode" = T2."CardCode"
   AND T0."CANCELED" = 'N' 
   AND (T0."DocStatus" = 'O' OR T0."DocStatus" = 'C') and T0."DocEntry" = '${doc}'`
+        return sql
+    }
+
+    getInvoiceItems(items, U_branch) {
+        let sql = ` SELECT  
+T0."U_BRAND",
+T0."U_Measure", 
+T0."PicturName", 
+T0."ItmsGrpCod", 
+T1."IsCommited", 
+T1."OnHand", 
+T1."OnOrder", 
+T1."Counted", 
+T0."ItemCode", 
+T0."ItemName", 
+T0."CodeBars", 
+T1."AvgPrice", 
+T4."ListName", 
+T3."PriceList", 
+T3."Price", 
+T3."Currency" 
+FROM ${this.db}.OITM T0 
+INNER JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
+INNER JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
+INNER JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+WHERE T4."ListName" = '${U_branch}' 
+AND T1."WhsCode" = '${U_branch}' 
+AND T0."ItemCode" in (${items.map(el => `'${el}'`)})
+ORDER BY T0."ItemName"`
         return sql
     }
 }

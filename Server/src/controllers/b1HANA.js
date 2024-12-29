@@ -48,7 +48,13 @@ class b1HANA {
             return next(ApiError.BadRequest('Филиал не выбран'));
         }
         const token = tokenService.generateJwt(user[0])
-        return res.json({ token, data: { SlpCode: get(user, '[0].SlpCode'), U_branch: get(user, '[0].U_branch') } })
+        return res.json({
+            token, data: {
+                SlpCode: get(user, '[0].SlpCode'),
+                U_branch: get(user, '[0].U_branch'),
+                U_role: get(user, '[0].U_role')
+            }
+        })
     };
 
     invoices = async (req, res, next) => {
@@ -602,6 +608,18 @@ class b1HANA {
             }
         }
 
+    }
+    getInvoiceItems = async (items, U_branch) => {
+        let query = await DataRepositories.getInvoiceItems(items, U_branch);
+        const data = await this.execute(query);
+        let newItems = []
+
+        if (data.length) {
+            newItems = await this.itemSchema(data)
+            if (newItems.length > 0) {
+                await Item.bulkWrite(newItems);
+            }
+        }
     }
 
 }

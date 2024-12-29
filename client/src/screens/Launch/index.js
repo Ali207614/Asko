@@ -17,7 +17,7 @@ const Launch = () => {
   return (
     <LaunchStyle>
       <div className="container">
-        <img src={Logo} alt="logo" className="img" />
+        {/* <img src={Logo} alt="logo" className="img" /> */}
       </div>
     </LaunchStyle>
   );
