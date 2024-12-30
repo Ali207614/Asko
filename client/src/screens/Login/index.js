@@ -15,7 +15,6 @@ import { ClipLoader } from "react-spinners";
 import { errorNotify } from '../../components/Helper';
 
 let url = process.env.REACT_APP_API_URL
-let db = process.env.REACT_APP_API_COMPANY_DB
 const override = {
   // position: "absolute",
   // left: "50%",

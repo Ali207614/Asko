@@ -66,6 +66,7 @@ const Order = () => {
   const [allPageLengthSelect, setAllPageLengthSelect] = useState(state.length);
   const [actualData, setActualData] = useState([])
   const [isEmpty, setIsEmpty] = useState(false)
+  const [bpShow, setBpShow] = useState(false)
   const [customer, setCustomer] = useState('')
   const [customerCode, setCustomerCode] = useState('')
   const [customerData, setCustomerData] = useState([])
@@ -173,6 +174,9 @@ const Order = () => {
       }, delay);
     }
     else {
+      if (customer.length == 0) {
+        setBpShow(false)
+      }
       setCustomerData([])
       if (!get(docEntry, 'id')) {
         setCustomerDataInvoice({})
@@ -199,11 +203,14 @@ const Order = () => {
         }
       )
       .then(({ data }) => {
+        setBpShow(true)
         setCustomerData(
           data
         )
       })
       .catch(err => {
+        setBpShow(false)
+
         errorNotify("Mijozlarni yuklashda muommo yuzaga keldi")
       });
 
@@ -312,7 +319,7 @@ const Order = () => {
               selectMerchantId: get(orderData, 'U_merchantturi'),
               selectMarchantFoiz: get(orderData, 'U_merchantfoizi')
             })
-
+            setCustomerData([{ CardCode: get(orderData, 'CardCode', ''), CardName: get(orderData, 'CardName', '') }])
             setSalesPerson(get(orderData, 'SLP'))
             setSalesPersonCode(get(orderData, 'SlpCode'))
             setComment(get(orderData, 'Comments'))
@@ -337,6 +344,7 @@ const Order = () => {
             setActualData(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString(), PriceList: { ...item.PriceList, Price: Number(item.PriceList.Price || 0) * get(getMe, 'currency.Rate') } }
             }))
+
           })
         }
         else {
@@ -672,10 +680,11 @@ const Order = () => {
                     setCustomer(e.target.value)
                     setCustomerCode('')
                   }} value={customer} type="search" className='order-inp' placeholder='Клиент' />
-                  {(customerData.length) ? (
+                  {(customerData.length && bpShow) ? (
                     <ul className="dropdown-menu" style={{ top: '49px', zIndex: 1 }}>
                       {customerData.map((customerItem, i) => (
                         <li onClick={() => {
+                          setBpShow(false)
                           setCustomer(get(customerItem, 'CardName', ''))
                           setCustomerCode(get(customerItem, 'CardCode', ''))
                           setCustomerData([])
@@ -685,7 +694,13 @@ const Order = () => {
                           </a></li>
                       ))}
                     </ul>
-                  ) : ''}
+                  ) : (customerData.length == 0 && customer.length && bpShow) ? <ul className="dropdown-menu" style={{ top: '49px', zIndex: 1 }}>
+                    <li onClick={() => {
+                      setBpShow(false)
+                    }} className={`dropdown-li`}><a className="dropdown-item" href="#">
+                        {'-'}
+                      </a></li>
+                  </ul> : ''}
                 </div>
                 <div className='w-70'>
                   <input value={get(date, 'DocDate', '')} onChange={(e) => setDate({ ...date, DocDate: e.target.value })} type="date" className='order-inp' placeholder='Doc Date' />

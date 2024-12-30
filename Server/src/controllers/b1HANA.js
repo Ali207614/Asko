@@ -24,6 +24,7 @@ class b1HANA {
             let data = await dbService.execute(sql);
             return data;
         } catch (e) {
+            console.log(e, ' bu e')
             throw new Error(e);
         }
     };
@@ -94,8 +95,13 @@ class b1HANA {
                     }
 
                     const invoices = await Invoice.find(searchQuery)
-                        .skip(offset - 1)
-                        .limit(limit)
+                        .sort({
+                            UUID: -1,       // UUID bo'lganlar yuqoriga
+                            DocEntry: -1,     // DocEntry bo'yicha katta-kichik tartib
+                            createdAt: -1     // Vaqt bo'yicha katta-kichik tartib
+                        })
+                        .skip(offset - 1)    // Paginatsiya: boshlanish nuqtasi
+                        .limit(limit)        // Paginatsiya: natijalar soni
                         .lean();
 
                     const totalDocuments = await Invoice.countDocuments(searchQuery);
@@ -392,7 +398,6 @@ class b1HANA {
             // Agar kolleksiyada ma'lumot bo'lmasa, yangi ma'lumotlarni yuklash
             const query = await DataRepositories.getAllBusinessPartners();
             const data = await this.execute(query);
-
             // Yangi ma'lumotlarni bazaga saqlash
             await BusinessPartner.insertMany(data);
 
@@ -413,6 +418,12 @@ class b1HANA {
             next(error); // Xatolikni middleware orqali qaytarish
         }
     };
+
+    getBusinessPartnersAndCars = async (CardCode = '') => {
+        const query = await DataRepositories.getBusinessPartnerAndCars({ CardCode });
+        const data = await this.execute(query);
+        return data
+    }
 
     getCars = async (req, res, next) => {
         try {
@@ -463,6 +474,20 @@ class b1HANA {
     createInvoice = async (req, res, next) => {
         try {
             let body = { ...req.body, DocCur: "UZS", Items: req.body.DocumentLines, sap: false, CANCELED: 'N', DocStatus: 'O', UUID: uuidv4() }
+            let bp = await this.getBusinessPartnersAndCars(req.body.CardCode)
+            if (bp.length) {
+                let obj = {
+                    ...bp[0], Cars: bp.filter(item => item.Code).map(el => {
+                        return { Code: el.Code, U_MARKA: el.U_MARKA, U_km: el.U_km, U_bp_code: el.U_bp_code, U_car_code: el.U_car_code, U_bp_name: el.U_bp_name, U_car_name: el.U_car_name }
+                    })
+                }
+                const result = await BusinessPartner.findOneAndUpdate(
+                    { CardCode: req.body.CardCode },
+                    { $set: obj },
+                    { upsert: true, new: true }
+                );
+                body = { ...body, Phone1: get(result, 'Phone1', ''), Phone2: get(result, "Phone2", ''), CardName: get(result, 'CardName') }
+            }
             await Invoice.create(body)
             return res.status(201).json()
         }
@@ -483,6 +508,21 @@ class b1HANA {
                 CANCELED: 'N',
                 DocStatus: 'O',
             };
+
+            let bp = await this.getBusinessPartnersAndCars(req.body.CardCode)
+            if (bp.length) {
+                let obj = {
+                    ...bp[0], Cars: bp.filter(item => item.Code).map(el => {
+                        return { Code: el.Code, U_MARKA: el.U_MARKA, U_km: el.U_km, U_bp_code: el.U_bp_code, U_car_code: el.U_car_code, U_bp_name: el.U_bp_name, U_car_name: el.U_car_name }
+                    })
+                }
+                const result = await BusinessPartner.findOneAndUpdate(
+                    { CardCode: req.body.CardCode },
+                    { $set: obj },
+                    { upsert: true, new: true }
+                );
+                body = { ...body, Phone1: get(result, 'Phone1', ''), Phone2: get(result, "Phone2", ''), CardName: get(result, 'CardName') }
+            }
 
             // Hujjatni yangilash
             const updatedInvoice = await Invoice.findOneAndUpdate(

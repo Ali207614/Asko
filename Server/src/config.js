@@ -25,8 +25,8 @@ const api_params = {
     Password
 }
 
-// const api = process.env.api
-const api = process.env.api_local
+const api = process.env.api
+// const api = process.env.api_local
 
 
 
