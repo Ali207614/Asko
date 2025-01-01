@@ -14,6 +14,7 @@ const ItemGroup = require("../models/ItemGroup");
 const BusinessPartner = require("../models/BusinessPartner");
 const Currency = require("../models/Currency");
 const Merchant = require("../models/Merchant");
+const UserDefinedField = require("../models/UserDefinedField");
 require('dotenv').config();
 
 
@@ -273,8 +274,8 @@ class b1HANA {
                         searchQuery.$or = [
                             { ItemName: { $regex: search, $options: "i" } },
                             { ItemCode: { $regex: search, $options: "i" } },
-                            { U_BRAND: { $regex: search, $options: "i" } },
-                            { U_Measure: { $regex: search, $options: "i" } }
+                            { U_brend: { $regex: search, $options: "i" } },
+                            { U_Article: { $regex: search, $options: "i" } }
                         ];
                     }
 
@@ -316,6 +317,7 @@ class b1HANA {
                 }
             }
             const query = await DataRepositories.getItems(req.query, req.user);
+            console.log(query)
             let data = await this.execute(query);
             let newItems = []
             if (data.length) {
@@ -543,7 +545,7 @@ class b1HANA {
     };
 
     getLastCurrency = async (req, res, next) => {
-        let usd = await Currency.find({ Currency: "USD" })
+        let usd = await Currency.find({ Currency: "UZS" })
         if (usd.length) {
             return res.status(200).json(usd[0])
         }
@@ -660,6 +662,20 @@ class b1HANA {
                 await Item.bulkWrite(newItems);
             }
         }
+    }
+
+    getUserDefinedField = async (req, res, next) => {
+        let count = await UserDefinedField.estimatedDocumentCount()
+        if (count > 0) {
+            let result = await UserDefinedField.find()
+            return res.status(200).json(result)
+        }
+        let query = await DataRepositories.getUFD1();
+        const data = await this.execute(query);
+        if (data.length) {
+            await UserDefinedField.create(data)
+        }
+        return res.status(200).json(data)
     }
 
 }

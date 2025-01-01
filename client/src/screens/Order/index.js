@@ -139,11 +139,29 @@ const Order = () => {
 
   useEffect(() => {
     getMerchant()
+    getUfd()
   }, []);
 
 
 
+  const getUfd = () => {
+    axios
+      .get(
+        url + `/api/getUFD`,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
+      )
+      .then(({ data }) => {
+      })
+      .catch(err => {
+        errorNotify(`UDF yuklashda muomo yuzaga keldi`)
+      });
 
+    return;
+  }
 
   useEffect(() => {
     const delay = 1000;
@@ -912,12 +930,12 @@ const Order = () => {
                                   </div>
                                   <div className='w-50 p-16' >
                                     <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
-                                      {get(item, 'U_BRAND', '') || '-'}
+                                      {get(item, 'U_brend', '') || '-'}
                                     </p>
                                   </div>
                                   <div className='w-50 p-16' >
                                     <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
-                                      {get(item, 'U_Measure', '') || '-'}
+                                      {get(item, 'U_Article', '') || '-'}
                                     </p>
                                   </div>
                                   <div className='w-50 p-16' >

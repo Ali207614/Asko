@@ -166,7 +166,7 @@ class b1SL {
 
     createBusinessPartner = async (req, res, next) => {
         let body = req.body
-        body = { ...req.body, "Series": 83, }
+        body = { ...req.body, "Series": 82, }
         const axios = Axios.create({
             baseURL: `${this.api}`,
             timeout: 30000,

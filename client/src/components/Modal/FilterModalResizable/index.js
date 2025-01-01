@@ -60,8 +60,8 @@ const FilterModalResizable = ({ actualData, getRef, filterProperty, setFilterPro
       if (!
         (get(item, 'ItemCode', '').toLowerCase().includes(search.toLowerCase()) ||
           get(item, 'ItemName', '').toLowerCase().includes(search.toLowerCase()) ||
-          get(item, 'U_BRAND', '-').toLowerCase().includes(search.toLowerCase()) ||
-          get(item, 'U_Measure', '-').toLowerCase().includes(search.toLowerCase()))
+          get(item, 'U_brend', '-').toLowerCase().includes(search.toLowerCase()) ||
+          get(item, 'U_Article', '-').toLowerCase().includes(search.toLowerCase()))
       ) {
         return false
       }

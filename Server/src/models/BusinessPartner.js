@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const businessPartner = new mongoose.Schema({
     CardCode: { type: String },
     CardName: { type: String },
@@ -7,7 +6,9 @@ const businessPartner = new mongoose.Schema({
     GroupCode: { type: String },
     Phone1: { type: String },
     Phone2: { type: String },
-    U_customer: { type: String },
+    U_whwerasko: { type: String },
+    U_region: { type: String },
+    U_provincy: { type: String },
     U_gender: { type: String },
     U_dateofbirth: { type: String },
     Balance: { type: String },

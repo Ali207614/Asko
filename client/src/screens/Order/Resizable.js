@@ -366,12 +366,12 @@ const Resizable = ({
                                                         </div>
                                                         <div className='w-50 p-16' >
                                                             <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
-                                                                {get(item, 'U_BRAND', '') || '-'}
+                                                                {get(item, 'U_brend', '') || '-'}
                                                             </p>
                                                         </div>
                                                         <div className='w-50 p-16' >
                                                             <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
-                                                                {get(item, 'U_Measure', '') || '-'}
+                                                                {get(item, 'U_Article', '') || '-'}
                                                             </p>
                                                         </div>
                                                         <div className='w-50 p-16' >

@@ -114,6 +114,9 @@ const Home = () => {
         return;
     };
 
+  
+
+
     useEffect(() => {
         getCurrency()
     }, [])

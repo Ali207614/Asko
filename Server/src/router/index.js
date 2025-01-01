@@ -30,16 +30,8 @@ router.get('/api/cars', authMiddleware, b1HANA.getCars);
 router.get('/api/getCurrency', authMiddleware, b1HANA.getLastCurrency);
 
 router.get('/api/getMerchant', authMiddleware, b1HANA.getMerchant);
+router.get('/api/getUFD', authMiddleware, b1HANA.getUserDefinedField);
 
-// router.get('/b1s/v1/:path', b1SL.proxyFunc);
-// router.post('/b1s/v1/:path', b1SL.proxyFunc);
-// router.patch('/b1s/v1/:path', b1SL.proxyFunc);
-// router.put('/b1s/v1/:path', b1SL.proxyFunc);
-// router.delete('/b1s/v1/:path', b1SL.proxyFunc);
-// router.get('/b1s/v1/:path/:path2', b1SL.proxyFunc);
-// router.post('/b1s/v1/:path/:path2', b1SL.proxyFunc);
-// router.patch('/b1s/v1/:path/:path2', b1SL.proxyFunc);
-// router.put('/b1s/v1/:path/:path2', b1SL.proxyFunc);
-// router.delete('/b1s/v1/:path/:path2', b1SL.proxyFunc);
+
 
 module.exports = router

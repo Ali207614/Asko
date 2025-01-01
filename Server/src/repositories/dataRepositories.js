@@ -53,6 +53,7 @@ class DataRepositories {
               ${searchFilter} 
               ${statusPayFilter}
         `;
+        // T0."U_markamashina", T0."U_nomer", T0."U_merchantturi", T0."U_maerchantfoiz", T0."U_flayer", T0."U_vulkanizatsiya", T0."U_branch"
 
         return `
             SELECT (${lengthQuery}) as length, 
@@ -109,16 +110,16 @@ class DataRepositories {
         let searchFilter = search ? `AND (
             LOWER(T0."ItemCode") LIKE LOWER('%${search}%') OR
             LOWER(T0."ItemName") LIKE LOWER('%${search}%') OR
-            LOWER(T0."U_BRAND") LIKE LOWER('%${search}%') OR
-            LOWER(T0."U_Measure") LIKE LOWER('%${search}%')
+            LOWER(T0."U_brend") LIKE LOWER('%${search}%') OR
+            LOWER(T0."U_Article") LIKE LOWER('%${search}%')
         )` : '';
 
         let lengthQuery = `
             SELECT COUNT(1) 
             FROM ${this.db}.OITM T0 
-            INNER JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
-            INNER JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
-            INNER JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+            LEFT JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
+            LEFT JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
+            LEFT JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
             WHERE T4."ListName" = '${U_branch}' 
               AND T1."WhsCode" = '${U_branch}' 
               ${itemsFilter} 
@@ -127,8 +128,8 @@ class DataRepositories {
 
         return `
             SELECT (${lengthQuery}) as length,  
-                   T0."U_BRAND",
-                   T0."U_Measure", 
+                   T0."U_brend",
+                   T0."U_Article", 
                    T0."PicturName", 
                    T0."ItmsGrpCod", 
                    T1."IsCommited", 
@@ -144,9 +145,9 @@ class DataRepositories {
                    T3."Price", 
                    T3."Currency" 
             FROM ${this.db}.OITM T0 
-            INNER JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
-            INNER JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
-            INNER JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+            LEFT JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
+            LEFT JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
+            LEFT JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
             WHERE T4."ListName" = '${U_branch}' 
               AND T1."WhsCode" = '${U_branch}' 
               ${itemsFilter} 
@@ -165,7 +166,7 @@ class DataRepositories {
 
     getAllBusinessPartners() {
         let sql = `
-        SELECT T0."U_customer",T0."U_gender" , T0."U_dateofbirth" , T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0 WHERE T0."CardType" ='C'`
+        SELECT T0."U_provincy", T0."U_region", T0."U_whwerasko",T0."U_gender" , T0."U_dateofbirth" , T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0 WHERE T0."CardType" ='C'`
         return sql
     }
 
@@ -177,7 +178,7 @@ class DataRepositories {
 
     getBusinessPartnerAndCars({ CardCode = '' }) {
         let sql = `
-        SELECT T1."Code", T1."U_MARKA",T1."U_km", T1."U_bp_code", T1."U_car_code", T1."U_bp_name", T1."U_car_name", T0."U_customer",T0."U_gender" , T0."U_dateofbirth" , T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0
+        SELECT T1."Code", T1."U_MARKA",T1."U_km", T1."U_bp_code", T1."U_car_code", T1."U_bp_name", T1."U_car_name", T0."U_provincy", T0."U_region", T0."U_whwerasko",T0."U_gender" , T0."U_dateofbirth" , T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0
         left JOIN ${this.db}."@CARCODE" T1 on T1."U_bp_code" = T0."CardCode"  WHERE T0."CardType" ='C' and T0."CardCode" = '${CardCode}'`
         return sql
     }
@@ -196,7 +197,7 @@ class DataRepositories {
     getLastCurrency() {
         let sql = `SELECT T0."Currency", T0."RateDate", T0."Rate" 
         FROM ${db}.ORTT T0 
-        WHERE T0."RateDate" = CURRENT_DATE and T0."Currency"='USD'`
+        WHERE T0."RateDate" = CURRENT_DATE and T0."Currency"='UZS'`
         return sql
     }
 
@@ -245,8 +246,8 @@ INNER JOIN ${this.db}.OCRD T2 ON T0."CardCode" = T2."CardCode"
 
     getInvoiceItems(items, U_branch) {
         let sql = ` SELECT  
-T0."U_BRAND",
-T0."U_Measure", 
+T0."U_brend",
+T0."U_Article", 
 T0."PicturName", 
 T0."ItmsGrpCod", 
 T1."IsCommited", 
@@ -270,6 +271,10 @@ AND T1."WhsCode" = '${U_branch}'
 AND T0."ItemCode" in (${items.map(el => `'${el}'`)})
 ORDER BY T0."ItemName"`
         return sql
+    }
+
+    getUFD1() {
+        return `select * from ${this.db}.UFD1 T0  WHERE T0."TableID" in ('OCRD','@CARCODE','@MERCHANT')`
     }
 }
 
