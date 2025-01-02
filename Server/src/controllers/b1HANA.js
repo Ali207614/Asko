@@ -15,6 +15,7 @@ const BusinessPartner = require("../models/BusinessPartner");
 const Currency = require("../models/Currency");
 const Merchant = require("../models/Merchant");
 const UserDefinedField = require("../models/UserDefinedField");
+const DisCount = require("../models/DisCount");
 require('dotenv').config();
 
 
@@ -502,7 +503,7 @@ class b1HANA {
     updateInvoice = async (req, res, next) => {
         try {
             const uuid = req.params.id; // UUID ni oling
-            const body = {
+            let body = {
                 ...req.body,
                 DocCur: "UZS",
                 Items: req.body.DocumentLines, // Hujjat chiziqlari
@@ -674,6 +675,21 @@ class b1HANA {
         const data = await this.execute(query);
         if (data.length) {
             await UserDefinedField.create(data)
+        }
+        return res.status(200).json(data)
+    }
+
+    getDisCount = async (req, res, next) => {
+        let count = await DisCount.estimatedDocumentCount()
+        if (count > 0) {
+            let result = await DisCount.find()
+            return res.status(200).json(result)
+        }
+        let query = await DataRepositories.disCount();
+        console.log(query)
+        const data = await this.execute(query);
+        if (data.length) {
+            await DisCount.create(data)
         }
         return res.status(200).json(data)
     }

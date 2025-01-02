@@ -52,6 +52,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
 
 
   const [clone, setClone] = useState({})
+  const [disCount, setDiscount] = useState([])
   const [checked, setChecked] = useState(false);
   const [checked2, setChecked2] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -63,17 +64,18 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
     setChecked(nextChecked);
   };
   const handleChange2 = nextChecked => {
+    setClone({ ...clone, U_vulkanizatsiya2: nextChecked })
     setChecked2(nextChecked);
   };
 
 
   useEffect(() => {
     const ref = {
-      open: (data) => {
+      open: (data, discount) => {
+        setDiscount(discount)
         setIsOpenModal(true)
 
-        setClone({ ...data, U_flayer2: (get(data, 'U_flayer') && get(data, 'U_flayer') != 'Нет'), value: '' })
-        setChecked((get(data, 'U_flayer') && get(data, 'U_flayer') != 'Нет'))
+        setClone({ ...data })
       },
       close: () => {
         setIsOpenModal(false)
@@ -135,27 +137,28 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
 
             <div className='right-limit' style={{ marginLeft: '20px' }}>
               <button style={{ width: '150px' }} className='right-dropdown'>
-                <p className='right-limit-text'>{get(clone, 'U_merchantturi', '-') || '-'} - {get(clone, 'U_merchantfoizi')} %</p>
+                <p className='right-limit-text'>{get(clone, 'U_merchantturi', 'Naqd') || 'Naqd'} - {get(clone, 'U_merchantfoizi', 0) || 0} %</p>
               </button>
             </div>
 
             <div className='right-limit' style={{ marginLeft: '20px' }}>
               <label>
-                <span style={{ display: 'block', marginBottom: '7px' }} className='table-head-item'>Flayer - {formatterCurrency(30000, 'UZS')}</span>
+                <span style={{ display: 'block', marginBottom: '7px' }} className='table-head-item'>Flayer - {formatterCurrency(Number(get(disCount.find(item => item.U_name_disc == 'FLAYER'), 'U_sum_disc', 0) || 0), 'UZS')}</span>
                 <Switch
                   onChange={handleChange}
                   checked={checked}
-                  disabled={get(clone, 'U_flayer2')}
+                  disabled={get(clone, 'U_flayer') == 'Да'}
                   className="react-switch"
                 />
               </label>
             </div>
             <div className='right-limit' style={{ marginLeft: '20px' }}>
               <label>
-                <span style={{ display: 'block', marginBottom: '7px' }} className='table-head-item'>Balon</span>
+                <span style={{ display: 'block', marginBottom: '7px' }} className='table-head-item'>Vulkanizatisya - {formatterCurrency(Number(get(disCount.find(item => item.U_name_disc == 'VULKANIZATSIYA'), 'U_sum_disc', 0) || 0), 'UZS')}</span>
                 <Switch
                   onChange={handleChange2}
                   checked={checked2}
+                  disabled={get(clone, 'U_vulkanizatsiya') == 'Да'}
                   className="react-switch"
                 />
               </label>

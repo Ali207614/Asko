@@ -275,6 +275,12 @@ ORDER BY T0."ItemName"`
     getUFD1() {
         return `select * from ${this.db}.UFD1 T0  WHERE T0."TableID" in ('OCRD','@CARCODE','@MERCHANT')`
     }
+
+    disCount() {
+        return `SELECT T0."Code", T0."U_code_disc", T0."U_name_disc", T0."U_sum_disc" FROM ${this.db}."@DISCOUNT"  T0`
+    }
+
+
 }
 
 module.exports = new DataRepositories(db);

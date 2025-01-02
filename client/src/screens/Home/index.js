@@ -47,6 +47,7 @@ const Home = () => {
     const [loading, setLoading] = useState(false)
     const [mainCheck, setMainCheck] = useState(false)
     const [mainData, setMainData] = useState([])
+    const [disCount, setDisCount] = useState([])
 
     const [filterProperty, setFilterProperty] = useState(get(getFilter, 'filterProperty', {}))
 
@@ -113,12 +114,34 @@ const Home = () => {
 
         return;
     };
+    const getDisCount = () => {
+        axios
+            .get(
+                url + `/api/getDisCount`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${get(getMe, 'token')}`,
+                    }
+                }
+            )
+            .then(({ data }) => {
+                setDisCount(data)
+            })
+            .catch(err => {
+                errorNotify(`discount yuklashda muomo yuzaga keldi`)
+            });
 
-  
+        return;
+    };
+
+
 
 
     useEffect(() => {
         getCurrency()
+        if (get(getMe, 'data.U_role') == 'Cashier') {
+            getDisCount()
+        }
     }, [])
 
 
@@ -454,7 +477,7 @@ const Home = () => {
                                                                     }
                                                                 </button>
                                                                 {get(getMe, 'data.U_role') == 'Cashier' && <button onClick={() => {
-                                                                    incomingRef.current?.open(item);
+                                                                    incomingRef.current?.open(item, disCount);
                                                                 }} className='table-item-btn d-flex align'>
                                                                     Оплата <img src={editIcon} alt="arrow right" />
                                                                 </button>}

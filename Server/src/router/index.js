@@ -31,6 +31,7 @@ router.get('/api/getCurrency', authMiddleware, b1HANA.getLastCurrency);
 
 router.get('/api/getMerchant', authMiddleware, b1HANA.getMerchant);
 router.get('/api/getUFD', authMiddleware, b1HANA.getUserDefinedField);
+router.get('/api/getDisCount', authMiddleware, b1HANA.getDisCount);
 
 
 

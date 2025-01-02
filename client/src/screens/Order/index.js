@@ -741,7 +741,7 @@ const Order = () => {
 
               <div className='d-flex align justify'>
                 <div className='d-flex align'>
-                  <div className='right-limit' >
+                  {/* <div className='right-limit' >
                     <button style={{ width: "200px" }} onClick={() => setShowDropdownSalesPerson(!showDropDownSalesPerson)} className={`right-dropdown`}>
                       <p className='right-limit-text'>{salesPerson}</p>
                       <img src={arrowDown} className={showDropDownSalesPerson ? "up-arrow" : ""} alt="arrow-down-img" />
@@ -760,7 +760,7 @@ const Order = () => {
                         })
                       }
                     </ul>
-                  </div>
+                  </div> */}
 
                   <div className='right-limit' style={{ marginLeft: '20px' }}>
                     <button style={{ width: "200px" }} onClick={() => setShowDropdownStatus(!showDropDownStatus)} className={`right-dropdown`}>
@@ -777,7 +777,7 @@ const Order = () => {
                               return
                             }
                             return
-                          }} className={`dropdown-li ${get(customerDataInvoice, 'selectCar') == get(item, 'U_car_code') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'U_car_name', '')}  -  {get(item, 'U_car_code', '')}</a></li>)
+                          }} className={`dropdown-li ${get(customerDataInvoice, 'selectCar') == get(item, 'U_car_code') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'U_car_name', '').split('.')[1]}  -  {get(item, 'U_car_code', '')}</a></li>)
                         })
                       }
                     </ul>
@@ -797,11 +797,12 @@ const Order = () => {
 
                           return (<li style={{ height: '30px' }} key={i} onClick={() => {
                             if (get(customerDataInvoice, 'selectMerchantId') != get(item, 'U_merchant')) {
+                              console.log(item)
                               setState(actualData.filter(el => state.map(itemC => itemC.ItemCode).includes(el.ItemCode)).map(el => {
                                 return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(item, 'U_Foiz', 0) || 0) / 100) } }
                               }))
 
-                              setCustomerDataInvoice({ ...customerDataInvoice, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz') })
+                              setCustomerDataInvoice({ ...customerDataInvoice, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz', 0) || 0 })
                               setShowDropdownMerchant(false)
                               return
                             }
