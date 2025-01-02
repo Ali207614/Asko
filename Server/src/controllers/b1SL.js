@@ -57,7 +57,7 @@ class b1SL {
             .then(async ({ data }) => {
                 let businessPartner = await BusinessPartner.findOne({ CardCode: get(data, 'U_bp_code') })
                 if (businessPartner) {
-                    businessPartner.Cars.push({ Code: get(data, 'Code'), U_MARKA: get(data, 'U_MARKA'), U_km: get(data, 'U_km'), U_bp_code: get(data, 'U_bp_code'), U_car_code: get(data, 'U_car_code'), U_bp_name: get(data, 'U_bp_name'), U_car_name: get(data, 'U_car_name') })
+                    businessPartner.Cars.push({ Code: get(data, 'Code'), U_marka: get(data, 'U_marka'), U_car_km: get(data, 'U_car_km'), U_bp_code: get(data, 'U_bp_code'), U_car_code: get(data, 'U_car_code'), U_bp_name: get(data, 'U_bp_name'), U_car_name: get(data, 'U_car_name') })
                     await businessPartner.save()
                 }
                 return res.status(201).json({ status: true, data })

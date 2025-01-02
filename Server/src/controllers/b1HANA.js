@@ -480,7 +480,7 @@ class b1HANA {
             if (bp.length) {
                 let obj = {
                     ...bp[0], Cars: bp.filter(item => item.Code).map(el => {
-                        return { Code: el.Code, U_MARKA: el.U_MARKA, U_km: el.U_km, U_bp_code: el.U_bp_code, U_car_code: el.U_car_code, U_bp_name: el.U_bp_name, U_car_name: el.U_car_name }
+                        return { Code: el.Code, U_marka: el.U_marka, U_car_km: el.U_car_km, U_bp_code: el.U_bp_code, U_car_code: el.U_car_code, U_bp_name: el.U_bp_name, U_car_name: el.U_car_name }
                     })
                 }
                 const result = await BusinessPartner.findOneAndUpdate(
@@ -515,7 +515,7 @@ class b1HANA {
             if (bp.length) {
                 let obj = {
                     ...bp[0], Cars: bp.filter(item => item.Code).map(el => {
-                        return { Code: el.Code, U_MARKA: el.U_MARKA, U_km: el.U_km, U_bp_code: el.U_bp_code, U_car_code: el.U_car_code, U_bp_name: el.U_bp_name, U_car_name: el.U_car_name }
+                        return { Code: el.Code, U_marka: el.U_marka, U_car_km: el.U_car_km, U_bp_code: el.U_bp_code, U_car_code: el.U_car_code, U_bp_name: el.U_bp_name, U_car_name: el.U_car_name }
                     })
                 }
                 const result = await BusinessPartner.findOneAndUpdate(

@@ -172,20 +172,19 @@ class DataRepositories {
 
     getCars({ cardCode = '' }) {
         let sql = `
-        SELECT T0."Code", T0."U_MARKA",T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" FROM ${this.db}."@CARCODE"  T0 where "U_bp_code" = '${cardCode}'`
+        SELECT T0."Code", T0."U_marka",T0."U_car_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name" FROM ${this.db}."@CARCODE"  T0 where "U_bp_code" = '${cardCode}'`
         return sql
     }
-
     getBusinessPartnerAndCars({ CardCode = '' }) {
         let sql = `
-        SELECT T1."Code", T1."U_MARKA",T1."U_km", T1."U_bp_code", T1."U_car_code", T1."U_bp_name", T1."U_car_name", T0."U_provincy", T0."U_region", T0."U_whwerasko",T0."U_gender" , T0."U_dateofbirth" , T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0
+        SELECT T1."Code", T1."U_marka",T1."U_car_km", T1."U_bp_code", T1."U_car_code", T1."U_bp_name", T1."U_car_name", T0."U_provincy", T0."U_region", T0."U_whwerasko",T0."U_gender" , T0."U_dateofbirth" , T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0
         left JOIN ${this.db}."@CARCODE" T1 on T1."U_bp_code" = T0."CardCode"  WHERE T0."CardType" ='C' and T0."CardCode" = '${CardCode}'`
         return sql
     }
 
     getLastCodeCars() {
         let sql = `
-        SELECT T0."Code", T0."U_MARKA", T0."U_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name"
+        SELECT T0."Code", T0."U_marka", T0."U_car_km", T0."U_bp_code", T0."U_car_code", T0."U_bp_name", T0."U_car_name"
         FROM ${this.db}."@CARCODE" T0
         ORDER BY CAST(T0."Code" AS INTEGER) DESC
         LIMIT 1;

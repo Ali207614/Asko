@@ -70,6 +70,7 @@ const Order = () => {
   const [customer, setCustomer] = useState('')
   const [customerCode, setCustomerCode] = useState('')
   const [customerData, setCustomerData] = useState([])
+  const [whereKnow, setWhereKnow] = useState([])
   const [customerDataInvoice, setCustomerDataInvoice] = useState({})
   const [orderLoading, setOrderLoading] = useState(false)
   const [date, setDate] = useState({ DocDate: moment().format("YYYY-MM-DD"), DocDueDate: moment().format("YYYY-MM-DD") })
@@ -100,6 +101,8 @@ const Order = () => {
   const [groups, setGroups] = useState([])
 
   const [merchantList, setMerchantList] = useState([])
+  const [carBrandList, setCarBrandList] = useState([])
+  const [carBrandListName, setCarBrandListName] = useState([])
 
   const [filterProperty, setFilterProperty] = useState({})
   const [filterPropertyResize, setFilterPropertyResize] = useState({})
@@ -155,6 +158,9 @@ const Order = () => {
         }
       )
       .then(({ data }) => {
+        setWhereKnow(data.filter(item => item.TableID == 'OCRD' && item.FieldID == 4))
+        setCarBrandList(data.filter(item => item.TableID == '@CARCODE' && item.FieldID == 4))
+        setCarBrandListName(data.filter(item => item.TableID == '@CARCODE' && item.FieldID == 3))
       })
       .catch(err => {
         errorNotify(`UDF yuklashda muomo yuzaga keldi`)
@@ -688,7 +694,7 @@ const Order = () => {
               <div className="order-head-data d-flex align justify">
                 <div style={{ width: "10%" }}>
                   <button onClick={() => {
-                    businessPartner.current?.open(setCustomerDataInvoice, customerDataInvoice);
+                    businessPartner.current?.open(setCustomerDataInvoice, customerDataInvoice, whereKnow, carBrandList, carBrandListName);
                   }} className='btn-businesPartner'>
                     <img width={20} height={20} src={rightButton} alt="link-busines-partner" />
                   </button>

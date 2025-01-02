@@ -31,9 +31,7 @@ const customStyles = {
     zIndex: '1000'
   },
 };
-let carBrand = ['Chevrolet', 'Toyota', 'Volkswagen', 'Mercedes-Benz', 'BMW', 'Tesla', 'Honda', 'Ford', 'Hyundai', 'Nissan', 'BYD'].map((item, i) => {
-  return { id: i + 1, name: item }
-})
+
 
 let gender = [
   {
@@ -61,6 +59,13 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
 
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [showDropDownCarBrand, setShowDropDownCarBrand] = useState([]);
+  const [showDropDownCarName, setShowDropDownCarName] = useState([]);
+
+  const [showDropWhere, setShowDropWhere] = useState(false);
+  const [whereKnow, setWhereKnow] = useState([]);
+  const [carBrandList, serCarBrandList] = useState([]);
+  const [carBrandListName, serCarBrandListName] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [genderState, setShowGenderState] = useState(false);
@@ -75,8 +80,10 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
 
   useEffect(() => {
     const ref = {
-      open: (setCustomerDataInvoice, customerDataInvoice) => {
-        console.log(customerDataInvoice, ' bu partner')
+      open: (setCustomerDataInvoice, customerDataInvoice, whereKnow, carBrandList, carBrandListName) => {
+        setWhereKnow(whereKnow.sort((a, b) => a.FldValue.length - b.FldValue.length))
+        serCarBrandList(carBrandList)
+        serCarBrandListName(carBrandListName)
         setIsOpenModal(true);
         setCars([
           ...get(customerDataInvoice, 'Cars', []), // Mavjud mashinalarni qo'shamiz
@@ -130,7 +137,7 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
         get(clone, 'Phone1') != get(partner, 'Phone1') ||
         get(clone, 'Phone2') != get(partner, 'Phone2') ||
         get(clone, 'U_dateofbirth') != get(partner, 'U_dateofbirth') ||
-        get(clone, 'U_customer') != get(partner, 'U_customer') ||
+        get(clone, 'U_whwerasko') != get(partner, 'U_whwerasko') ||
         get(clone, 'U_gender') != get(partner, 'U_gender')
       ) {
         if (!get(clone, 'CardCode')) {
@@ -142,12 +149,12 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
         }
       }
       if (cardCode) {
-        const changedObjects = findDifferences(clone?.Cars || [], cars.filter(item => item.U_car_code || item.U_car_name || item.U_km || item.U_MARKA)).map(item => ({
+        const changedObjects = findDifferences(clone?.Cars || [], cars.filter(item => item.U_car_code || item.U_car_name || item.U_car_km || item.U_marka)).map(item => ({
           ...item,
-          U_MARKA: get(item, 'U_MARKA', '').toString(),
+          U_marka: get(item, 'U_marka', '').toString(),
           U_car_code: item?.U_car_code || '',
           U_car_name: item?.U_car_name || '',
-          U_km: item?.U_km || '',
+          U_car_km: item?.U_car_km || '',
           U_bp_code: cardCode,
         }));
 
@@ -355,18 +362,39 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
             <div className='partner-item' >
               <input value={partner.U_dateofbirth} onChange={(e) => setPartner({ ...partner, U_dateofbirth: e.target.value })} type="date" className='order-inp' placeholder='Birthday' />
             </div>
-            <div className='partner-item' >
-              <input value={partner.U_customer} onChange={(e) => setPartner({ ...partner, U_customer: e.target.value })} type="text" className='order-inp' placeholder='Qayerdan biladi' />
+
+            <div className='right-limit partner-item' >
+              <button style={{ height: '45.78px' }} onClick={() => setShowDropWhere(!showDropWhere)} className={`right-dropdown`}>
+                <p className='right-limit-text'>{get(partner, 'U_whwerasko', '-')}</p>
+                <img src={arrowDown} className={showDropWhere ? "up-arrow" : ""} alt="arrow-down-img" />
+              </button>
+              <ul style={{ zIndex: 1, top: '48px' }} className={`dropdown-menu  ${(showDropWhere) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                {
+                  whereKnow.map((item, ind) => {
+                    return (<li key={ind} onClick={() => {
+                      if (item.FldValue != get(partner, 'U_whwerasko')) {
+                        setPartner({ ...partner, U_whwerasko: item.FldValue });
+                      }
+                      setShowDropWhere(false)
+                      return
+                    }} className={`dropdown-li ${item.FldValue == get(partner, 'U_whwerasko') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'Descr')}</a></li>)
+                  })
+                }
+              </ul>
             </div>
+
+
+
+
           </div>
 
           <div className='table' >
             <div className='table-head'>
               <ul className='table-head-list d-flex align  justify'>
                 <li className='table-head-item '>N</li>
+                <li className='table-head-item '>Марка автомобиля</li>
                 <li className='table-head-item '>Название</li>
                 <li className='table-head-item '>Номер машина</li>
-                <li className='table-head-item '>Марка автомобиля</li>
                 <li className='table-head-item '>Пробег автомобиля</li>
               </ul>
             </div>
@@ -385,17 +413,54 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
                                 </p>
                               </div>
                               <div className='table-item-child  p-16' >
-                                <input
-                                  value={cars[i]?.U_car_name || ''}
-                                  onChange={(e) => {
-                                    const updatedCars = cars.map((car, index) =>
-                                      index === i ? { ...car, U_car_name: e.target.value } : car
-                                    );
-                                    setCars(updatedCars);
-                                  }}
-                                  type="text"
-                                  className='table-body-inp'
-                                  placeholder='-' />
+                                <div className='right-limit' >
+                                  <button onClick={() => setShowDropDownCarBrand(showDropDownCarBrand === i ? '' : i)} className={`right-dropdown`}>
+                                    <p className='right-limit-text'>{carBrandList.find(item => item.FldValue == cars[i]?.U_marka)?.Descr || '-'}</p>
+                                    <img src={arrowDown} className={showDropDownCarBrand === i ? "up-arrow" : ""} alt="arrow-down-img" />
+                                  </button>
+                                  <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${(showDropDownCarBrand === i && carBrandList.length) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                                    {
+                                      carBrandList.map((item, ind) => {
+                                        return (<li key={ind} onClick={() => {
+                                          if (cars[i]?.U_marka != get(item, 'FldValue')) {
+                                            const updatedCars = cars.map((car, index) =>
+                                              index === i ? { ...car, U_marka: get(item, 'FldValue') } : car
+                                            );
+                                            setCars(updatedCars);
+                                          }
+                                          setShowDropDownCarBrand('')
+                                          return
+                                        }} className={`dropdown-li ${cars[i]?.U_marka === i ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'Descr')}</a></li>)
+                                      })
+                                    }
+                                  </ul>
+                                </div>
+                              </div>
+                              <div className='table-item-child  p-16' >
+                                <div className='right-limit' >
+                                  <button onClick={() => setShowDropDownCarName(showDropDownCarName === i ? '' : i)} className={`right-dropdown`}>
+                                    <p className='right-limit-text'>{cars[i]?.U_car_name?.split('.')[1] || '-'}</p>
+                                    <img src={arrowDown} className={showDropDownCarName === i ? "up-arrow" : ""} alt="arrow-down-img" />
+                                  </button>
+                                  <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${(showDropDownCarName === i && carBrandListName.length) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                                    {
+                                      carBrandListName.length ? carBrandListName.filter(item => item.FldValue.toLowerCase().includes(carBrandList.find(el => el.FldValue == cars[i]?.U_marka)?.Descr.toLowerCase())).map((item, ind) => {
+                                        console.log(carBrandList.find(el => el.FldValue == cars[i]?.U_marka)?.Descr)
+
+                                        return (<li key={ind} onClick={() => {
+                                          if (cars[i]?.U_car_name != get(item, 'FldValue')) {
+                                            const updatedCars = cars.map((car, index) =>
+                                              index === i ? { ...car, U_car_name: get(item, 'FldValue') } : car
+                                            );
+                                            setCars(updatedCars);
+                                          }
+                                          setShowDropDownCarName('')
+                                          return
+                                        }} className={`dropdown-li ${cars[i]?.U_car_name === i ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'Descr')}</a></li>)
+                                      })
+                                        : ''}
+                                  </ul>
+                                </div>
                               </div>
 
                               <div className='table-item-child  p-16' >
@@ -411,37 +476,15 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
                                   className='table-body-inp'
                                   placeholder='-' />
                               </div>
-                              <div className='table-item-child  p-16' >
-                                <div className='right-limit' >
-                                  <button onClick={() => setShowDropDownCarBrand(showDropDownCarBrand === i ? '' : i)} className={`right-dropdown`}>
-                                    <p className='right-limit-text'>{carBrand.find(item => item.id == cars[i]?.U_MARKA)?.name || '-'}</p>
-                                    <img src={arrowDown} className={showDropDownCarBrand === i ? "up-arrow" : ""} alt="arrow-down-img" />
-                                  </button>
-                                  <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${(showDropDownCarBrand === i && carBrand.length) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
-                                    {
-                                      carBrand.map((item, ind) => {
-                                        return (<li key={ind} onClick={() => {
-                                          if (cars[i]?.U_MARKA != get(item, 'id')) {
-                                            const updatedCars = cars.map((car, index) =>
-                                              index === i ? { ...car, U_MARKA: get(item, 'id') } : car
-                                            );
-                                            setCars(updatedCars);
-                                          }
-                                          setShowDropDownCarBrand('')
-                                          return
-                                        }} className={`dropdown-li ${cars[i]?.U_MARKA === i ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'name')}</a></li>)
-                                      })
-                                    }
-                                  </ul>
-                                </div>
 
-                              </div>
+
+
                               <div className='table-item-child  p-16' >
                                 <input
-                                  value={cars[i]?.U_km || ''}
+                                  value={cars[i]?.U_car_km || ''}
                                   onChange={(e) => {
                                     const updatedCars = cars.map((car, index) =>
-                                      index === i ? { ...car, U_km: e.target.value } : car
+                                      index === i ? { ...car, U_car_km: e.target.value } : car
                                     );
                                     setCars(updatedCars);
                                   }}
