@@ -75,6 +75,8 @@ class DataRepositories {
                    T0."CardName", 
                    T0."DocCur", 
                    T0."DocRate", 
+                    T0."DocTotalSy", 
+                   T0."PaidSys", 
                    T0."DocTotal", 
                    T0."PaidToDate", 
                    T0."SlpCode", 
@@ -201,7 +203,7 @@ class DataRepositories {
     }
 
     getMerchant() {
-        let sql = `SELECT T0."Code", T0."U_merchant", T0."U_Foiz", T0."U_schot" FROM ${this.db}."@MERCHANT"  T0`
+        let sql = `SELECT T0."Code", T0."U_merchant", T0."U_Foiz", T0."U_schot"  , T0."U_status" FROM ${this.db}."@MERCHANT"  T0`
         return sql
     }
 
@@ -226,6 +228,8 @@ class DataRepositories {
        T0."DocCur", 
        T0."DocRate", 
        T0."DocTotal", 
+       T0."DocTotalSy", 
+       T0."PaidSys", 
        T0."PaidToDate", 
        T0."SlpCode", 
        T0."U_branch",

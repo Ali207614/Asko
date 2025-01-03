@@ -2,7 +2,7 @@ import React, { memo, useEffect, useState } from 'react';
 import Styles from './Styles';
 import Modal from 'react-modal';
 import { useTranslation } from 'react-i18next';
-import { errorNotify, statuses, successNotify, warehouseList } from '../../Helper';
+import { errorNotify, statuses, successNotify, warehouseList, warningNotify } from '../../Helper';
 import arrowDown from '../../../assets/images/arrow-down.svg';
 import CloseFilter from '../../../assets/images/close.svg'
 import { get } from 'lodash';
@@ -50,6 +50,8 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
 
   const [isOpenModal, setIsOpenModal] = useState(false);
 
+  const [showDropDownMerchant, setShowDropdownMerchant] = useState(false)
+  const [merchantList, setMerchantList] = useState([])
 
   const [clone, setClone] = useState({})
   const [disCount, setDiscount] = useState([])
@@ -58,6 +60,10 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
   const [updateLoading, setUpdateLoading] = useState(false);
 
   const [value, setValue] = useState('');
+  const sum = ((get(clone, 'U_flayer2', '') || get(clone, 'U_flayer') == 'Да')
+    ? Number(get(disCount.find(item => item.U_name_disc == 'FLAYER'), 'U_sum_disc', 0) || 0) : 0)
+    + ((get(clone, 'U_vulkanizatsiya2', '') || get(clone, 'U_vulkanizatsiya') == 'Да')
+      ? Number(get(disCount.find(item => item.U_name_disc == 'VULKANIZATSIYA'), 'U_sum_disc', 0) || 0) : 0)
 
   const handleChange = nextChecked => {
     setClone({ ...clone, U_flayer2: nextChecked })
@@ -71,22 +77,66 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
 
   useEffect(() => {
     const ref = {
-      open: (data, discount) => {
+      open: async (data, discount) => {
         setDiscount(discount)
         setIsOpenModal(true)
 
-        setClone({ ...data })
+        if (get(data, 'U_flayer') == 'Да') {
+          setChecked(true);
+        }
+        if (get(data, 'U_vulkanizatsiya') == 'Да') {
+          setChecked2(true);
+        }
+        if (get(data, 'DocEntry')) {
+          let merchants = await getMerchant()
+          if (merchants.length) {
+            setMerchantList(merchants)
+            let naqd = merchants.find(item => item.U_merchant.toLowerCase() == 'naqd' && item.U_status == '02')
+            if (naqd) {
+              await setClone({
+                ...data, selectMerchantId: naqd.U_merchant, selectMarchantFoiz: naqd.U_Foiz, schet: naqd.U_schot
+              })
+            }
+          }
+
+        }
+        else {
+          setClone({ ...data })
+
+        }
       },
       close: () => {
         setIsOpenModal(false)
       },
     };
     getRef(ref);
-  }, []);
 
+
+  }, []);
+  function getMerchant() {
+    return axios
+      .get(
+        url + `/api/getMerchant`,
+        {
+          headers: {
+            'Authorization': `Bearer ${get(getMe, 'token')}`,
+          }
+        }
+      )
+      .then(async ({ data }) => {
+        return data
+      })
+      .catch(err => {
+        errorNotify("Tovarlarni yuklashda muommo yuzaga keldi")
+      });
+  };
 
   let addInvoice = async () => {
     try {
+      if (Number(value) <= 0) {
+        warningNotify("Raqam formati xato")
+        return
+      }
       setUpdateLoading(true)
       let result = await axios.post(url + `/api/invoices`, { ...clone, value }, {
         headers: {
@@ -98,12 +148,12 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
       successNotify("Muvaffaqiyatli qo'shildi")
       getOrders({ page: 1, limit, value: search, filterProperty })
       setIsOpenModal(false)
-
+      setValue("")
       return
     } catch (err) {
       setUpdateLoading(false)
 
-      errorNotify("Business Partner qo'shishda muomo yuzaga keldi");
+      errorNotify("Invoice qo'shishda muomo yuzaga keldi");
     }
   };
 
@@ -141,13 +191,44 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
               </button>
             </div>
 
+            {
+              get(clone, 'DocEntry') && <div className='right-limit' style={{ marginLeft: '20px' }}>
+                <button style={{ width: "200px" }} onClick={() => {
+                  setShowDropdownMerchant(!showDropDownMerchant)
+                }
+                } className={`right-dropdown`}>
+                  <p className='right-limit-text'>{get(clone, 'selectMerchantId') || 'Naqd'} - {get(clone, 'selectMarchantFoiz', 0) || 0} %</p>
+                  <img src={arrowDown} className={showDropDownMerchant ? "up-arrow" : ""} alt="arrow-down-img" />
+                </button>
+                <ul style={{ zIndex: 1, width: '240px' }} className={`dropdown-menu  ${(showDropDownMerchant) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                  {
+                    merchantList.filter(item => item.U_status == '02').map((item, i) => {
+
+                      return (<li style={{ height: '30px' }} key={i} onClick={() => {
+                        if (get(clone, 'selectMerchantId') != get(item, 'U_merchant')) {
+                          setClone({ ...clone, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz'), schet: get(item, 'U_schot') })
+                          setShowDropdownMerchant(false)
+                          return
+                        }
+                        return
+                      }} className={`dropdown-li ${get(clone, 'selectMerchantId') == get(item, 'U_merchant') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'U_merchant')} - {get(item, 'U_Foiz', '0') || 0} %</a></li>)
+                    })
+                  }
+                </ul>
+              </div>
+            }
+
+
+          </div>
+
+          <div className='order-head-data d-flex align' style={{ marginTop: '20px', marginBottom: '20px' }}>
             <div className='right-limit' style={{ marginLeft: '20px' }}>
               <label>
                 <span style={{ display: 'block', marginBottom: '7px' }} className='table-head-item'>Flayer - {formatterCurrency(Number(get(disCount.find(item => item.U_name_disc == 'FLAYER'), 'U_sum_disc', 0) || 0), 'UZS')}</span>
                 <Switch
                   onChange={handleChange}
                   checked={checked}
-                  disabled={get(clone, 'U_flayer') == 'Да'}
+                  disabled={(get(clone, 'U_flayer') == 'Да' || get(clone, 'DocEntry'))}
                   className="react-switch"
                 />
               </label>
@@ -158,7 +239,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
                 <Switch
                   onChange={handleChange2}
                   checked={checked2}
-                  disabled={get(clone, 'U_vulkanizatsiya') == 'Да'}
+                  disabled={(get(clone, 'U_vulkanizatsiya') == 'Да' || get(clone, 'DocEntry'))}
                   className="react-switch"
                 />
               </label>
@@ -169,29 +250,32 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
         <div style={{ margin: '20px 0', display: "flex", alignItems: "center" }}>
           <div className='right-head' style={{ justifyContent: 'end' }}>
             <div className='footer-block' style={{ display: 'inline', background: `#F7F8F9` }}>
-              <p style={{ display: 'inline' }} className='footer-text'>Сумма сделки : <span className='footer-text-spn'>{formatterCurrency(Number(get(clone, 'DocTotal', 0) || 0) - (get(clone, 'U_flayer2') ? 30000 : 0), 'UZS')}</span></p>
+              <p style={{ display: 'inline' }} className='footer-text'>Сумма сделки : <span className='footer-text-spn'>{formatterCurrency(Number(get(clone, 'DocTotalSy', 0) || 0) - (sum || 0), 'UZS')}</span></p>
             </div>
             <div style={{ display: 'inline', margin: '20px 0', background: `#F7F8F9` }} className='footer-block'>
               <p style={{ display: 'inline' }} className='footer-text'>
-                Закрытая сумма : <span className='footer-text-spn'>{formatterCurrency(Number(get(clone, 'PaidToDate', 0) || 0) + Number(value), 'UZS')}</span></p>
+                Закрытая сумма : <span className='footer-text-spn'>{formatterCurrency(Number(get(clone, 'PaidSys', 0) || 0) + Number(value), 'UZS')}</span></p>
             </div>
             <div style={{ display: 'inline', background: `#F7F8F9` }} className='footer-block'>
               <p style={{ display: 'inline' }} className='footer-text'>
-                Открытая сумма : <span className='footer-text-spn'>{formatterCurrency(Number((get(clone, 'DocTotal', 0) || 0) - (get(clone, 'U_flayer2') ? 30000 : 0)) - get(clone, 'PaidToDate', 0) - value, 'UZS')}</span></p>
+                Открытая сумма : <span className='footer-text-spn'>{formatterCurrency(Number((get(clone, 'DocTotalSy', 0) || 0) - (sum || 0)) - get(clone, 'PaidSys', 0) - value, 'UZS')}</span></p>
             </div>
           </div>
           <div className='d-flex align' style={{ marginLeft: '70px' }}>
             <input
-              type="text" // 'search' o'rniga 'text' ishlatiladi, chunki raqamlar va formatlash ustidan boshqaruv kerak.
-              value={value}
+              type="text"
+              value={value
+                ? formatterCurrency(Number(value), "UZS").replace("UZS", "").trim()
+                : ''}
               disabled={updateLoading}
               className={`table-body-inp bg-white`}
               onChange={(e) => {
-                const newValue = e.target.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
-                setValue(newValue);
+                const rawValue = e.target.value.replace(/\s/g, '').replace(/[^0-9]/g, ''); // Faqat raqamlar
+                setValue(rawValue || 0); // Asosiy qiymatni saqlash
               }}
-              placeholder="Введите число" // kerakli placeholder
+              placeholder="Введите число"
             />
+
 
 
             <button disabled={updateLoading} onClick={addInvoice} style={{ marginLeft: '20px' }} className='btn-head'>

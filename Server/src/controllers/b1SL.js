@@ -9,6 +9,8 @@ const { api_params } = require("../config");
 const b1HANA = require("./b1HANA");
 const BusinessPartner = require("../models/BusinessPartner");
 const Invoice = require("../models/Invoice");
+const Currency = require("../models/Currency");
+const DisCount = require("../models/DisCount");
 require('dotenv').config();
 
 
@@ -203,21 +205,21 @@ class b1SL {
     postInvoices = async (req, res, next) => {
         let body = req.body
         if (get(body, 'DocEntry') && get(body, 'sap')) {
-            let incoming = await this.postIncomingPayment(body, 5010)
+            let incoming = await this.postIncomingPayment(body, get(body, 'schet'))
             return res.status(get(incoming, 'status')).json(incoming)
         }
         let schema = {
             "CardCode": get(body, 'CardCode'),
             "DocDate": get(body, 'DocDate'),
+            "DocCurrency": "UZS",
             "DocDueDate": get(body, 'DocDueDate'),
             "Comments": get(body, 'Comments'),
             "U_branch": get(body, 'U_branch'),
-            "DocCurrency": "UZS",
             "U_car": get(body, 'U_car', ''),
             "U_merchantturi": get(body, 'U_merchantturi', ''),
             "U_merchantfoizi": get(body, 'U_merchantfoizi', ''),
             "U_flayer": get(body, 'U_flayer2') ? 'Да' : "Нет",
-            "U_vulkanizatsiya": "Нет",
+            "U_vulkanizatsiya": get(body, 'U_vulkanizatsiya2') ? 'Да' : "Нет",
             "DocumentLines": get(body, 'Items', []).map(item => {
                 return {
                     ItemCode: item.ItemCode,
@@ -225,10 +227,12 @@ class b1SL {
                     Price: item.Price * item.Quantity,
                     UnitPrice: item.Price,
                     WarehouseCode: get(body, 'U_branch'),
-                    CostingCode: get(body, 'U_branch')
+                    // CostingCode: get(body, 'U_branch'),
+                    "Currency": "UZS"
                 }
             })
         }
+
         const axios = Axios.create({
             baseURL: `${this.api}`,
             timeout: 30000,
@@ -244,11 +248,24 @@ class b1SL {
             .post(`/Invoices`, schema)
             .then(async ({ data }) => {
                 await Invoice.deleteOne({ UUID: req.body.UUID })
+                let account = []
+                if (get(body, 'U_flayer2') || get(body, 'U_vulkanizatsiya2')) {
+                    account = await DisCount.find()
+                }
                 if (get(body, 'U_flayer2')) {
-                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: 30000 }, 9410)
+                    let acc = account.find(item => item.U_name_disc == 'FLAYER')
+                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: acc.U_sum_disc }, acc.Code)
+                }
+
+                if (get(body, 'U_vulkanizatsiya2')) {
+                    let acc = account.find(item => item.U_name_disc == 'VULKANIZATSIYA')
+
+                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: acc.U_sum_disc }, acc.Code)
+
                 }
                 let items = await b1HANA.getInvoiceItems(get(body, 'Items', []).map(item => item.ItemCode), get(body, 'U_branch'))
-                let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry') })
+                let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry') }, get(body, 'U_schet'))
+
                 return res.status(incoming?.status).json(incoming)
             })
             .catch(async (err) => {
@@ -259,28 +276,31 @@ class b1SL {
                     }
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
                 } else {
-                    console.log(err, ' bu err')
+                    console.log(err, ' bu joyda err')
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
 
                 }
             });
     }
 
-    postIncomingPayment = async (body, account = 5010) => {
+    postIncomingPayment = async (body, account = 50101) => {
         let schema = {
             "CardCode": get(body, 'CardCode'),
             "CashAccount": account,
             "DocCurrency": "UZS",
             "CashSum": get(body, 'value'),
+            "CashSumFC": get(body, 'value'),
+            "CashSumSys": get(body, 'value'),
             "PaymentInvoices": [
                 {
-                    "SumApplied": get(body, 'value'),
+                    "AppliedFC": get(body, 'value'),
+                    "AppliedSys": get(body, 'value'),
                     "DocEntry": get(body, 'DocEntry'),
                 }
             ],
         }
+        console.log(schema)
 
-        console.log(schema, ' bu body')
         const axios = Axios.create({
             baseURL: `${this.api}`,
             timeout: 30000,
@@ -295,7 +315,6 @@ class b1SL {
         return axios
             .post(`/IncomingPayments`, schema)
             .then(async ({ data }) => {
-                console.log('bu joyga tushgan')
                 await b1HANA.getInvoiceByDocEntry(get(body, 'DocEntry'))
                 return { status: 201 }
             })
@@ -305,10 +324,10 @@ class b1SL {
                     if (token.status) {
                         return await this.postIncomingPayment(body, account)
                     }
-                    return { status: get(err, 'response.status'), message: err }
+                    return { status: get(err, 'response.status', 400) || 400, message: get(err, 'response.data.error.message.value') }
                 } else {
-                    console.log(err)
-                    return { status: get(err, 'response.status'), message: err }
+                    console.log(get(err, 'response.data.error.message.value'), ' err ')
+                    return { status: get(err, 'response.status', 400) || 400, message: get(err, 'response.data.error.message.value') }
                 }
             });
     }

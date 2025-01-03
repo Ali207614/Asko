@@ -204,8 +204,8 @@ const Home = () => {
             .then(({ data }) => {
                 setLoading(false)
                 setMainData(data.map(item => {
-                    let total = Number(get(item, 'DocTotal', 0)) - Number(get(item, 'PaidToDate', 0))
-                    return { ...item, status: (Number(get(item, 'PaidToDate', 0) == 0 ? 2 : (total == 0 ? 1 : 3))) }
+                    let total = Number(get(item, 'DocTotalSy', 0)) - Number(get(item, 'PaidSys', 0))
+                    return { ...item, status: (Number(get(item, 'PaidSys', 0) == 0 ? 2 : (total == 0 ? 1 : 3))) }
                 }))
                 setAllPageLength(get(data, '[0].LENGTH', 0))
                 setSelect([])
@@ -371,7 +371,10 @@ const Home = () => {
                                 </div>
 
 
-                                {get(getMe, 'data.U_role') == 'Salesperson' && <button onClick={() => navigate('/invoice')} className='btn-head'>
+                                {/* {get(getMe, 'data.U_role') == 'Salesperson' && <button onClick={() => navigate('/invoice')} className='btn-head'>
+                                    Добавить
+                                </button>} */}
+                                {<button onClick={() => navigate('/invoice')} className='btn-head'>
                                     Добавить
                                 </button>}
                             </div>
@@ -442,17 +445,18 @@ const Home = () => {
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
-                                                                        {formatterCurrency(Number(get(item, 'DocTotal', 0)), get(item, 'DocCur', 'USD'))}
+                                                                        {formatterCurrency(Number(get(item, 'DocTotalSy', 0)), 'UZS')}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
-                                                                        {formatterCurrency(Number(get(item, 'PaidToDate', 0)), get(item, 'DocCur', 'USD'))}
+                                                                        {formatterCurrency(
+                                                                            Number(get(item, 'PaidSys', 0)), 'UZS')}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text'>
-                                                                        {formatterCurrency(Number(get(item, 'DocTotal', 0)) - Number(get(item, 'PaidToDate', 0)), get(item, 'DocCur', 'USD'))}
+                                                                        {formatterCurrency((Number(get(item, 'DocTotalSy', 0)) - Number(get(item, 'PaidSys', 0))), 'UZS')}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>

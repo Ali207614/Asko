@@ -18,6 +18,8 @@ const InvoiceSchema = new Schema({
     DocCur: { type: String, required: false },   // Valyuta kodi
     DocRate: { type: Number, required: false },  // Valyuta kursi
     DocTotal: { type: Number, required: false }, // Umumiy summa
+    DocTotalSy: { type: Number, required: false }, // Umumiy summa
+    PaidSys: { type: Number, required: false }, // Umumiy summa
     PaidToDate: { type: Number, default: 0 },   // To'langan summa
     SlpCode: { type: Number, required: false },  // Sotuvchi kodi
     U_branch: { type: String, required: false }, // Filial kodi
@@ -26,6 +28,7 @@ const InvoiceSchema = new Schema({
     U_merchantfoizi: { type: String, required: false }, // Filial kodi
     U_flayer: { type: String, required: false }, // Filial kodi
     U_vulkanizatsiya: { type: String, required: false }, // Filial kodi
+    U_schet: { type: String, required: false }, // Filial kodi
     sap: { type: Boolean, default: true },
     Items: [
         {

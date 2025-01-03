@@ -363,7 +363,7 @@ const Order = () => {
             setState(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString() }
             }).map(el => {
-              return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 1) || 1) / 100) } }
+              return { ...el, PriceList: { ...el.PriceList, Price: (Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 0) || 0) / 100) } }
             }))
             setActualData(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString(), PriceList: { ...item.PriceList, Price: Number(item.PriceList.Price || 0) * get(getMe, 'currency.Rate') } }
@@ -492,6 +492,9 @@ const Order = () => {
   const Orders = async () => {
     let link = '/api/draft'
     setOrderLoading(true)
+    let mapped = actualData.map(el => {
+      return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0) / 100) } }
+    })
     let schema = {
       "CardCode": customerCode,
       "CardName": customer,
@@ -503,12 +506,9 @@ const Order = () => {
       "U_car": get(customerDataInvoice, 'selectCar'),
       "U_merchantturi": get(customerDataInvoice, 'selectMerchantId'),
       "U_merchantfoizi": get(customerDataInvoice, 'selectMarchantFoiz'),
-      "DocTotal": actualData.map(el => {
-        return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
-      }).reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
-      "DocumentLines": actualData.map(el => {
-        return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
-      }).map(item => {
+      "U_schet": get(customerDataInvoice, 'schet'),
+      "DocTotalSy": mapped.reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
+      "DocumentLines": mapped.map(item => {
         let obj = {
           "ItemCode": get(item, 'ItemCode', ''),
           "Dscription": get(item, 'ItemName', ''),
@@ -520,6 +520,8 @@ const Order = () => {
       })
     }
 
+
+    console.log(schema)
     let body = schema
     axios
       .post(
@@ -563,6 +565,9 @@ const Order = () => {
 
   const Update = () => {
     let link = `/api/draft/${get(docEntry, 'id', 0)}`
+    let mapped = actualData.map(el => {
+      return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0) / 100) } }
+    })
     let schema = {
       "CardCode": customerCode,
       "CardName": customer,
@@ -574,12 +579,9 @@ const Order = () => {
       "U_car": get(customerDataInvoice, 'selectCar'),
       "U_merchantturi": get(customerDataInvoice, 'selectMerchantId'),
       "U_merchantfoizi": get(customerDataInvoice, 'selectMarchantFoiz'),
-      "DocTotal": actualData.map(el => {
-        return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
-      }).reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
-      "DocumentLines": actualData.map(el => {
-        return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
-      }).map(item => {
+      "U_schet": get(customerDataInvoice, 'schet'),
+      "DocTotalSy": mapped.reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
+      "DocumentLines": mapped.map(item => {
         let obj = {
           "ItemCode": get(item, 'ItemCode', ''),
           "Dscription": get(item, 'ItemName', ''),
@@ -591,6 +593,7 @@ const Order = () => {
       })
     }
     let body = schema
+    console.log(schema)
     setOrderLoading(true)
     axios
       .put(
@@ -793,7 +796,7 @@ const Order = () => {
                     </button>
                     <ul style={{ zIndex: 1, width: '240px' }} className={`dropdown-menu  ${(showDropDownMerchant) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
                       {
-                        [{ U_merchant: '' }, ...merchantList].map((item, i) => {
+                        [{ U_merchant: '' }, ...merchantList.filter(item => item.U_status == '01')].map((item, i) => {
 
                           return (<li style={{ height: '30px' }} key={i} onClick={() => {
                             if (get(customerDataInvoice, 'selectMerchantId') != get(item, 'U_merchant')) {
@@ -802,7 +805,7 @@ const Order = () => {
                                 return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(item, 'U_Foiz', 0) || 0) / 100) } }
                               }))
 
-                              setCustomerDataInvoice({ ...customerDataInvoice, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz', 0) || 0 })
+                              setCustomerDataInvoice({ ...customerDataInvoice, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz', 0) || 0, schet: get(item, 'U_schet') })
                               setShowDropdownMerchant(false)
                               return
                             }
