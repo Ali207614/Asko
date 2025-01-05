@@ -13,9 +13,9 @@ const conn_params = {
     pwd: process.env.password,
 };
 
-// const db = process.env.db
+const db = process.env.db
 
-const db = process.env.test_db
+// const db = process.env.test_db
 const UserName = process.env.service_layer_username
 const Password = process.env.service_layer_password
 

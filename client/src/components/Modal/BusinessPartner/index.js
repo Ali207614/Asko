@@ -62,9 +62,11 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
   const [showDropDownCarName, setShowDropDownCarName] = useState([]);
 
   const [showDropWhere, setShowDropWhere] = useState(false);
+  const [showDropRegion, setShowDropRegion] = useState(false);
   const [whereKnow, setWhereKnow] = useState([]);
   const [carBrandList, serCarBrandList] = useState([]);
   const [carBrandListName, serCarBrandListName] = useState([]);
+  const [region, setRegion] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -80,7 +82,8 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
 
   useEffect(() => {
     const ref = {
-      open: (setCustomerDataInvoice, customerDataInvoice, whereKnow, carBrandList, carBrandListName) => {
+      open: (setCustomerDataInvoice, customerDataInvoice, whereKnow, carBrandList, carBrandListName, region) => {
+        setRegion(region)
         setWhereKnow(whereKnow.sort((a, b) => a.FldValue.length - b.FldValue.length))
         serCarBrandList(carBrandList)
         serCarBrandListName(carBrandListName)
@@ -138,14 +141,16 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
         get(clone, 'Phone2') != get(partner, 'Phone2') ||
         get(clone, 'U_dateofbirth') != get(partner, 'U_dateofbirth') ||
         get(clone, 'U_whwerasko') != get(partner, 'U_whwerasko') ||
-        get(clone, 'U_gender') != get(partner, 'U_gender')
+        get(clone, 'U_gender') != get(partner, 'U_gender') ||
+        get(clone, 'U_provincy') != get(partner, 'U_provincy') ||
+        get(clone, 'U_region') != get(partner, 'U_region')
       ) {
         if (!get(clone, 'CardCode')) {
           let result = await createPartner(partner);
           cardCode = get(result, 'CardCode')
         }
         else {
-          await updatePartner(partner);
+          // await updatePartner(partner);
         }
       }
       if (cardCode) {
@@ -172,7 +177,7 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
 
           if (updates.length) {
             try {
-              await Promise.all(updates.map(item => updateCars(item)));
+              // await Promise.all(updates.map(item => updateCars(item)));
             } catch (e) {
               console.error(e, 'Mashinalarni yangilashda xatolik yuzaga keldi');
             }
@@ -198,11 +203,9 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
         },
       });
       setUpdateLoading(false)
-
       successNotify("Mashinalar yangilandi");
     } catch (err) {
       setUpdateLoading(false)
-
       errorNotify("Mashinalarni yangilashda muammo yuzaga keldi");
     }
   };
@@ -324,7 +327,7 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
           <div style={{ marginBottom: '20px' }} className='d-flex align  justify'>
             <h3>Business Partner</h3>
             <button className='btn-head' onClick={addBusinessPartner}>
-              {updateLoading ? <Spinner /> : (get(partner, 'CardCode', '') ? 'Обновить' : 'Добавить')}
+              {updateLoading ? <Spinner /> : ('Добавить')}
             </button>
           </div>
           <div className='d-flex align '>
@@ -383,6 +386,32 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
               </ul>
             </div>
 
+            <div className='right-limit partner-item' >
+              <button style={{ height: '45.78px' }} onClick={() => setShowDropRegion(!showDropRegion)} className={`right-dropdown`}>
+                <p className='right-limit-text'>{get(partner, 'U_region', '-')}</p>
+                <img src={arrowDown} className={showDropRegion ? "up-arrow" : ""} alt="arrow-down-img" />
+              </button>
+              <ul style={{ zIndex: 1, top: '48px' }} className={`dropdown-menu  ${(showDropRegion) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                {
+                  region.map((item, ind) => {
+                    return (<li key={ind} onClick={() => {
+                      if (item.FldValue != get(partner, 'U_region')) {
+                        setPartner({ ...partner, U_region: item.FldValue });
+                      }
+                      setShowDropRegion(false)
+                      return
+                    }} className={`dropdown-li ${item.FldValue == get(partner, 'U_region') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'Descr')}</a></li>)
+                  })
+                }
+              </ul>
+            </div>
+
+            <div className='partner-item' >
+              <input value={partner.U_provincy} onChange={(e) => setPartner({ ...partner, U_provincy: e.target.value })} type="text" className='order-inp' placeholder='Region' />
+            </div>
+
+
+
 
 
 
@@ -420,7 +449,7 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
                                   </button>
                                   <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${(showDropDownCarBrand === i && carBrandList.length) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
                                     {
-                                      carBrandList.map((item, ind) => {
+                                      ['-', ...carBrandList].map((item, ind) => {
                                         return (<li key={ind} onClick={() => {
                                           if (cars[i]?.U_marka != get(item, 'FldValue')) {
                                             const updatedCars = cars.map((car, index) =>
@@ -444,13 +473,12 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
                                   </button>
                                   <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${(showDropDownCarName === i && carBrandListName.length) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
                                     {
-                                      carBrandListName.length ? carBrandListName.filter(item => item.FldValue.toLowerCase().includes(carBrandList.find(el => el.FldValue == cars[i]?.U_marka)?.Descr.toLowerCase())).map((item, ind) => {
+                                      carBrandListName.length ? ['-', ...carBrandListName.filter(item => item.FldValue.toLowerCase().includes(carBrandList.find(el => el.FldValue == cars[i]?.U_marka)?.Descr.toLowerCase()))].map((item, ind) => {
                                         console.log(carBrandList.find(el => el.FldValue == cars[i]?.U_marka)?.Descr)
-
                                         return (<li key={ind} onClick={() => {
                                           if (cars[i]?.U_car_name != get(item, 'FldValue')) {
                                             const updatedCars = cars.map((car, index) =>
-                                              index === i ? { ...car, U_car_name: get(item, 'FldValue') } : car
+                                              index === i ? { ...car, U_car_name: get(item, 'FldValue', '') || '' } : car
                                             );
                                             setCars(updatedCars);
                                           }

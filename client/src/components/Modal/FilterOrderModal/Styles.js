@@ -75,7 +75,9 @@ line-height: normal;
 margin-left: 8px;
 }
 .filter-wrapper{
-  flex-wrap:wrap
+  flex-wrap:wrap;
+  flex-direction: column;
+    align-items: baseline;
 }
 .filter-wrapper-inner{
   margin-bottom: 8px;

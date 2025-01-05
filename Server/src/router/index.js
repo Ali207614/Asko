@@ -33,6 +33,8 @@ router.get('/api/getMerchant', authMiddleware, b1HANA.getMerchant);
 router.get('/api/getUFD', authMiddleware, b1HANA.getUserDefinedField);
 router.get('/api/getDisCount', authMiddleware, b1HANA.getDisCount);
 
+router.get('/api/getOutgoingPayment', authMiddleware, b1HANA.getOutgoingPayment);
+
 
 
 module.exports = router

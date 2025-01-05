@@ -97,7 +97,7 @@ const FilterOrderModal = ({ getRef, filterProperty, setFilterProperty, getOrders
               </div>
               <div className='filter-manager'>
                 <h3 className='filter-title'>Состояние</h3>
-                <div className='filter-wrapper df align'>
+                <div className='filter-wrapper df'>
                   <label class="container">Все
                     <input type="checkbox" checked={get(cloneFilter, 'status', []).includes('0')} onChange={(e) => isCheck('0')} />
                   </label>

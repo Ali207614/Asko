@@ -60,9 +60,9 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
   const [updateLoading, setUpdateLoading] = useState(false);
 
   const [value, setValue] = useState('');
-  const sum = ((get(clone, 'U_flayer2', '') || get(clone, 'U_flayer') == 'Да')
+  let sum = ((get(clone, 'U_flayer2', '') && get(clone, 'U_flayer') != 'Да')
     ? Number(get(disCount.find(item => item.U_name_disc == 'FLAYER'), 'U_sum_disc', 0) || 0) : 0)
-    + ((get(clone, 'U_vulkanizatsiya2', '') || get(clone, 'U_vulkanizatsiya') == 'Да')
+    + ((get(clone, 'U_vulkanizatsiya2', '') && get(clone, 'U_vulkanizatsiya') != 'Да')
       ? Number(get(disCount.find(item => item.U_name_disc == 'VULKANIZATSIYA'), 'U_sum_disc', 0) || 0) : 0)
 
   const handleChange = nextChecked => {
@@ -83,9 +83,11 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
 
         if (get(data, 'U_flayer') == 'Да') {
           setChecked(true);
+          await setClone({ ...clone, U_flayer2: true, U_flayer: "Да" })
         }
         if (get(data, 'U_vulkanizatsiya') == 'Да') {
           setChecked2(true);
+          await setClone({ ...clone, U_vulkanizatsiya2: true, U_vulkanizatsiya: 'Да' })
         }
         if (get(data, 'DocEntry')) {
           let merchants = await getMerchant()
@@ -137,6 +139,11 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
         warningNotify("Raqam formati xato")
         return
       }
+      if ((Number(get(clone, 'PaidSys', 0) || 0) + Number(value) + (sum || 0)) > Number(get(clone, 'DocTotalSy', 0))) {
+        warningNotify("Summada xatolik")
+        return
+      }
+      console.log(clone, ' bu clone')
       setUpdateLoading(true)
       let result = await axios.post(url + `/api/invoices`, { ...clone, value }, {
         headers: {
@@ -149,6 +156,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
       getOrders({ page: 1, limit, value: search, filterProperty })
       setIsOpenModal(false)
       setValue("")
+
       return
     } catch (err) {
       setUpdateLoading(false)
@@ -203,7 +211,6 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
                 <ul style={{ zIndex: 1, width: '240px' }} className={`dropdown-menu  ${(showDropDownMerchant) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
                   {
                     merchantList.filter(item => item.U_status == '02').map((item, i) => {
-
                       return (<li style={{ height: '30px' }} key={i} onClick={() => {
                         if (get(clone, 'selectMerchantId') != get(item, 'U_merchant')) {
                           setClone({ ...clone, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz'), schet: get(item, 'U_schot') })
@@ -228,7 +235,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
                 <Switch
                   onChange={handleChange}
                   checked={checked}
-                  disabled={(get(clone, 'U_flayer') == 'Да' || get(clone, 'DocEntry'))}
+                  disabled={(get(clone, 'U_flayer') == 'Да')}
                   className="react-switch"
                 />
               </label>
@@ -239,7 +246,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
                 <Switch
                   onChange={handleChange2}
                   checked={checked2}
-                  disabled={(get(clone, 'U_vulkanizatsiya') == 'Да' || get(clone, 'DocEntry'))}
+                  disabled={(get(clone, 'U_vulkanizatsiya') == 'Да')}
                   className="react-switch"
                 />
               </label>
@@ -258,7 +265,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
             </div>
             <div style={{ display: 'inline', background: `#F7F8F9` }} className='footer-block'>
               <p style={{ display: 'inline' }} className='footer-text'>
-                Открытая сумма : <span className='footer-text-spn'>{formatterCurrency(Number((get(clone, 'DocTotalSy', 0) || 0) - (sum || 0)) - get(clone, 'PaidSys', 0) - value, 'UZS')}</span></p>
+                Открытая сумма : <span className='footer-text-spn'>{formatterCurrency(Number((get(clone, 'DocTotalSy', 0) || 0) - (sum || 0)) - get(clone, 'PaidSys', 0), 'UZS')}</span></p>
             </div>
           </div>
           <div className='d-flex align' style={{ marginLeft: '70px' }}>

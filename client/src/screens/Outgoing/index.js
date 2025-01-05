@@ -26,7 +26,7 @@ let url = process.env.REACT_APP_API_URL
 
 
 
-const Home = () => {
+const Outgoing = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -95,54 +95,7 @@ const Home = () => {
     }, [limit, ts, search, filterProperty, activeData])
 
 
-    const getCurrency = () => {
-        axios
-            .get(
-                url + `/api/getCurrency`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${get(getMe, 'token')}`,
-                    }
-                }
-            )
-            .then(({ data }) => {
-                dispatch(setMe({ ...getMe, currency: data }));
-            })
-            .catch(err => {
-                errorNotify(`Valyuta yuklashda muomo yuzaga keldi`)
-            });
 
-        return;
-    };
-    const getDisCount = () => {
-        axios
-            .get(
-                url + `/api/getDisCount`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${get(getMe, 'token')}`,
-                    }
-                }
-            )
-            .then(({ data }) => {
-                setDisCount(data)
-            })
-            .catch(err => {
-                errorNotify(`discount yuklashda muomo yuzaga keldi`)
-            });
-
-        return;
-    };
-
-
-
-
-    useEffect(() => {
-        getCurrency()
-        if (get(getMe, 'data.U_role') == 'Cashier') {
-            getDisCount()
-        }
-    }, [])
 
 
     useEffect(() => {
@@ -194,7 +147,7 @@ const Home = () => {
         // status agar false bo'lsa mongo db bilan ishlaydi agar true bo'lsa to'gridan to'gri sql bilan
         axios
             .get(
-                url + `/api/invoices?offset=${get(pagination, 'page', 1)}&limit=${get(pagination, 'limit', limit)}&status=${false}&search=${get(pagination, 'value', '').toLowerCase()}` + link,
+                url + `/api/getOutgoingPayment?offset=${get(pagination, 'page', 1)}&limit=${get(pagination, 'limit', limit)}&status=${false}&search=${get(pagination, 'value', '').toLowerCase()}` + link,
                 {
                     headers: {
                         'Authorization': `Bearer ${get(getMe, 'token')}`,
@@ -203,10 +156,7 @@ const Home = () => {
             )
             .then(({ data }) => {
                 setLoading(false)
-                setMainData(data.map(item => {
-                    let total = Number(get(item, 'DocTotalSy', 0)) - Number(get(item, 'PaidSys', 0))
-                    return { ...item, status: (Number(get(item, 'PaidSys', 0) == 0 ? 2 : (total == 0 ? 1 : 3))) }
-                }))
+                setMainData(data)
                 setAllPageLength(get(data, '[0].LENGTH', 0))
                 setSelect([])
             })
@@ -270,33 +220,32 @@ const Home = () => {
 
 
     let statuses = {
-        1: {
+        'Y': {
             color: '#FFFFFF', // Oq rang matn uchun
             backgroundColor: '#388E3C', // Yashil rang (To'liq to'langan)
-            name: 'Оплачено',
+            name: 'Утверждено',
         },
-        2: {
+        "N": {
             color: '#FFFFFF', // Oq rang matn uchun
             backgroundColor: '#D32F2F', // Qizil rang (Umuman to'lanmagan)
-            name: 'Не оплачено',
+            name: 'Отклонено',
         },
-        3: {
+        'W': {
             color: '#FFFFFF', // Oq rang matn uchun
             backgroundColor: '#FFA000', // To'q sariq rang (Chala to'langan)
-            name: 'Частично оплачено',
+            name: 'Ожидание утверждения',
         },
     };
 
     return (
         <>
-
             <Style>
                 <Layout>
                     <div className='container'>
                         <div className='head'>
                             <div className='left-head d-flex align'>
                                 <h3 className='left-title'>
-                                    Продажа</h3>
+                                    Исходящий платеж</h3>
                             </div>
                             <div className='right-head'>
 
@@ -371,12 +320,12 @@ const Home = () => {
                                 </div>
 
 
-                                {get(getMe, 'data.U_role') == 'Salesperson' && <button onClick={() => navigate('/invoice')} className='btn-head'>
-                                    Добавить
-                                </button>}
-                                {/* {<button onClick={() => navigate('/invoice')} className='btn-head'>
+                                {/* {get(getMe, 'data.U_role') == 'Salesperson' && <button onClick={() => navigate('/invoice')} className='btn-head'>
                                     Добавить
                                 </button>} */}
+                                {<button onClick={() => navigate('/payment')} className='btn-head'>
+                                    Добавить
+                                </button>}
                             </div>
                         </div>
                         <div className='table'>
@@ -384,23 +333,11 @@ const Home = () => {
                                 <ul className='table-head-list d-flex align  justify'>
                                     {/* <li className='table-head-item'>DocNum</li> */}
                                     <li className='table-head-item  d-flex align '>
-                                        <input checked={mainCheck} className='m-right-16 inp-checkbox' onClick={() => {
-                                            if (mainCheck) {
-                                                setSelect([])
-                                            }
-                                            else {
-                                                setSelect([...mainData.map((item, i) => (i + 1))])
-                                            }
-                                            setMainCheck(!mainCheck)
-                                        }} type="checkbox" name="checkbox" />
-                                        Контрагент
+                                        Название счета
                                     </li>
-                                    <li className='table-head-item w-70'>Телефон</li>
-                                    <li className='table-head-item w-70'>Номер машины</li>
+                                    <li className='table-head-item w-70'>Код счета</li>
                                     <li className='table-head-item w-70'>Дата регистрации</li>
                                     <li className='table-head-item w-70'>Всего</li>
-                                    <li className='table-head-item w-70'>Закрытая сумма</li>
-                                    <li className='table-head-item w-70'>Открытая сумма</li>
                                     <li className='table-head-item w-70'>Статус оплаты</li>
                                 </ul>
                             </div>
@@ -414,54 +351,30 @@ const Home = () => {
                                                         <li key={i} className={`table-body-item ${activeData === (i + 1) ? 'active-table' : ''}`}>
                                                             <div className='table-item-head d-flex align  justify'>
                                                                 <div className='d-flex align  w-100 p-16'>
-                                                                    <input checked={select.find(item => item == (i + 1))} className='m-right-16 inp-checkbox' onClick={(e) => {
-                                                                        if (select.find(item => item == (i + 1))) {
-                                                                            setSelect([...select.filter(item => item != (i + 1))])
-                                                                        }
-                                                                        else {
-                                                                            setSelect([...select, (i + 1)])
-                                                                        }
-                                                                    }} type="checkbox" name="checkbox" />
-                                                                    <p className='table-body-text truncated-text ' style={{ width: '200px' }} title={get(item, 'CardName', '')} onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                        {get(item, 'CardName', '')}
+                                                                    <p className='table-body-text truncated-text ' style={{ width: '200px' }} title={get(item, 'AcctName', '')} onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
+                                                                        {get(item, 'AcctName', '')}
                                                                     </p>
                                                                 </div>
 
 
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
-                                                                        {get(item, 'Phone1', '-') || '-'}
+                                                                        {get(item, 'CardCode', '-') || '-'}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
-                                                                        {get(item, 'U_car', '') || 'Нет'}
+                                                                        {moment(get(item, 'DocumentDate', '')).format("DD-MM-YYYY")}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
-                                                                        {moment(get(item, 'DocDate', '')).format("DD-MM-YYYY")}
+                                                                        {formatterCurrency(Number(get(item, 'DocTotalFC', 0)), 'UZS')}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text '>
-                                                                        {formatterCurrency(Number(get(item, 'DocTotalSy', 0)), 'UZS')}
-                                                                    </p>
-                                                                </div>
-                                                                <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text '>
-                                                                        {formatterCurrency(
-                                                                            Number(get(item, 'PaidSys', 0)), 'UZS')}
-                                                                    </p>
-                                                                </div>
-                                                                <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text'>
-                                                                        {formatterCurrency((Number(get(item, 'DocTotalSy', 0)) - Number(get(item, 'PaidSys', 0))), 'UZS')}
-                                                                    </p>
-                                                                </div>
-                                                                <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <button style={{ color: statuses[get(item, 'status', '1')].color, backgroundColor: statuses[get(item, 'status', '1')].backgroundColor }} className='table-body-text status-button'>
-                                                                        {statuses[get(item, 'status', '1')].name}
+                                                                    <button style={{ color: statuses[get(item, 'ApprovalStatus', '1')]?.color || '#000', backgroundColor: statuses[get(item, 'ApprovalStatus', '1')]?.backgroundColor || '#E0E0E0' }} className='table-body-text status-button'>
+                                                                        {statuses[get(item, 'ApprovalStatus', '1')]?.name || 'Без процесса утверждения'}
                                                                     </button>
                                                                 </div>
 
@@ -486,26 +399,6 @@ const Home = () => {
                                                                     Оплата <img src={editIcon} alt="arrow right" />
                                                                 </button>}
 
-                                                                {/* <div className="dropdown-container" >
-                                                                    <button onClick={() => {
-                                                                        setInvoiceDropDown(!invoiceDropDown)
-                                                                        setDropdownOpen(false)
-                                                                    }} style={{ width: '110px' }} className='table-item-btn d-flex align table-item-text position-relative'>
-                                                                        Накладный <img src={editIcon} alt="arrow-right" />
-                                                                    </button>
-                                                                    {(invoiceDropDown) && (
-                                                                        <ul className="dropdown-menu">
-                                                                            {['N1 Накладная', 'N2 Накладная'].map((status, i) => (
-                                                                                <li key={i} className={`dropdown-li`}>
-                                                                                    <Link to={(get(item, 'draft') ? `/invoice/${item.DocEntry}/draft/${i === 0 ? 'total' : ''}` : `/invoice/${item.DocEntry}/${i === 0 ? 'total' : ''}`)} className="dropdown-item display-b" href="#">
-                                                                                        {status}
-                                                                                    </Link>
-                                                                                </li>
-                                                                            ))}
-
-                                                                        </ul>
-                                                                    )}
-                                                                </div> */}
                                                                 {
                                                                     get(item, 'UUID') ?
                                                                         <div className="dropdown-container">
@@ -549,7 +442,6 @@ const Home = () => {
             </Style>
             <>
                 <ToastContainer />
-                {/* <ConfirmModalOrder getRef={confirmModalRef} title={"Oshibka"} fn={statusChange} /> */}
                 <FilterOrderModal
                     getRef={filterModalRef}
                     filterProperty={filterProperty}
@@ -576,4 +468,4 @@ const Home = () => {
     );
 };
 
-export default Home;
+export default Outgoing;

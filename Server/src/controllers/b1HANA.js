@@ -495,7 +495,6 @@ class b1HANA {
             return res.status(201).json()
         }
         catch (e) {
-            console.log(e)
             return res.status(404).json(e)
         }
     }
@@ -664,6 +663,18 @@ class b1HANA {
             }
         }
     }
+    getOutgoingPayment = async (req, res, next) => {
+        try {
+            let { offset, limit, status, search } = req.query
+            const branch = req.user.U_branch;
+            let query = await DataRepositories.outGoing(branch,req.query);
+            const data = await this.execute(query);
+            return res.status(200).json(data)
+        }
+        catch (error) {
+            return res.status(404).json(error)
+        }
+    }
 
     getUserDefinedField = async (req, res, next) => {
         let count = await UserDefinedField.estimatedDocumentCount()
@@ -686,7 +697,6 @@ class b1HANA {
             return res.status(200).json(result)
         }
         let query = await DataRepositories.disCount();
-        console.log(query)
         const data = await this.execute(query);
         if (data.length) {
             await DisCount.create(data)

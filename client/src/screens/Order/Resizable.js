@@ -386,7 +386,7 @@ const Resizable = ({
                                                         </div>
                                                         <div className='w-50 p-16' >
                                                             <p className='table-body-text '>
-                                                                {Number(get(item, 'OnHand.OnHand', ''))} / <span className='isCommited'>{Number(get(item, 'OnHand.OnHand', '')) - Number(get(item, 'OnHand.IsCommited', ''))}</span>
+                                                                {Number(get(item, 'OnHand.OnHand', ''))} шт
                                                             </p>
                                                         </div>
                                                         <div className='w-70 p-16'>
@@ -424,7 +424,7 @@ const Resizable = ({
                                                         <div className='w-47px p-16'>
                                                             <button onClick={() => {
                                                                 setState([...state.filter(el => get(el, 'ItemCode') !== get(item, 'ItemCode'))]);
-                                                                setMainData([{ ...item, value: '', karobka: '', PriceList: actualData.filter(el => get(el, 'ItemCode') == get(item, 'ItemCode')).PriceList }, ...mainData]);
+                                                                setMainData([{ ...item, value: '', karobka: '', ...mainData }]);
                                                                 setActualData([...actualData.filter(el => get(el, 'ItemCode') !== get(item, 'ItemCode'))]);
                                                                 setAllPageLength(allPageLength + 1);
                                                                 setAllPageLengthSelect(allPageLengthSelect - 1);

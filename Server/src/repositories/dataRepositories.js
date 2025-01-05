@@ -161,7 +161,7 @@ class DataRepositories {
 
     getItemGroups() {
         let sql = `
-        SELECT  T1."Discount", T0."ItmsGrpCod", T0."ItmsGrpNam" FROM ${this.db}.OITB T0 inner join  ${this.db}.EDG1 T1 on T1."ObjKey" = T0."ItmsGrpCod" 
+        SELECT  T0."ItmsGrpCod", T0."ItmsGrpNam" FROM ${this.db}.OITB T0 
         `
         return sql
     }
@@ -283,6 +283,56 @@ ORDER BY T0."ItemName"`
     disCount() {
         return `SELECT T0."Code", T0."U_code_disc", T0."U_name_disc", T0."U_sum_disc" FROM ${this.db}."@DISCOUNT"  T0`
     }
+
+    outGoing(U_branch = '', { offset, limit, search }) {
+        return `
+        WITH FilteredData AS (
+            SELECT 
+                T1."AcctName", 
+                T0."DocNum", 
+                T0."DocType", 
+                T0."Canceled", 
+                T0."DocDate" AS "DocumentDate",
+                T0."DocDueDate", 
+                T0."CardCode", 
+                T0."DocTotal", 
+                T0."DocTotalFC", 
+                T0."CardName",
+                T2."Status" AS "ApprovalStatus", 
+                CASE T2."Status"
+                    WHEN 'W' THEN 'Waiting for Approval'
+                    WHEN 'Y' THEN 'Approved'
+                    WHEN 'N' THEN 'Rejected'
+                    ELSE 'No Approval Process'
+                END AS "ApprovalStatusDescription"
+            FROM ${this.db}.OVPM T0
+            INNER JOIN ${this.db}.OACT T1 ON T0."CardCode" = T1."AcctCode"
+            LEFT JOIN ${this.db}.OWDD T2 ON T0."DocEntry" = T2."DocEntry" 
+            WHERE 
+                T0."Canceled" = 'N' 
+                AND T0."DocType" = 'A' 
+                AND T0."U_branch" = '${U_branch}'
+                AND T2."ObjType" = 46
+                ${search ? `AND (T1."AcctName" LIKE '%${search}%' OR T0."CardName" LIKE '%${search}%')` : ''}
+        )
+        SELECT 
+            *,
+            (SELECT COUNT(*) FROM FilteredData) AS "LENGTH"
+        FROM FilteredData
+        ORDER BY "DocumentDate" DESC 
+        LIMIT ${limit}
+        OFFSET ${offset - 1};
+        `;
+    }
+
+
+    getAcctSearch(value = '') {
+        return `
+            Select * from ${this.db}.OACT
+        `;
+    }
+
+
 
 
 }
