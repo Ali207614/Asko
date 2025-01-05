@@ -262,6 +262,8 @@ class b1SL {
                     console.log(update)
                     await sleepNow(300)
                 }
+
+                console.log(body, ' bu body')
                 let incoming = await this.postIncomingPayment(body, get(body, 'schet'))
 
 
@@ -317,7 +319,7 @@ class b1SL {
             })
         }
 
-        console.log(schema)
+        console.log(schema, ' bu schema')
 
         const axios = Axios.create({
             baseURL: `${this.api}`,
@@ -333,8 +335,6 @@ class b1SL {
         return axios
             .post(`/Invoices`, schema)
             .then(async ({ data }) => {
-                await sleepNow(300)
-
                 await Invoice.deleteOne({ UUID: req.body.UUID })
                 let account = []
                 if (get(body, 'U_flayer2') || get(body, 'U_vulkanizatsiya2')) {
@@ -342,19 +342,22 @@ class b1SL {
                 }
                 if (get(body, 'U_flayer2')) {
                     let acc = account.find(item => item.U_name_disc == 'FLAYER')
-                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: acc.U_sum_disc }, acc.Code)
                     await sleepNow(300)
+                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: acc.U_sum_disc }, acc.Code)
 
                 }
 
                 if (get(body, 'U_vulkanizatsiya2')) {
                     let acc = account.find(item => item.U_name_disc == 'VULKANIZATSIYA')
-                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: acc.U_sum_disc }, acc.Code)
                     await sleepNow(300)
+                    let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry'), value: acc.U_sum_disc }, acc.Code)
 
                 }
+
+                await sleepNow(300)
+
                 let items = await b1HANA.getInvoiceItems(get(body, 'Items', []).map(item => item.ItemCode), get(body, 'U_branch'))
-                let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry') }, get(body, 'schet'))
+                let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry') }, get(body, 'U_schet'))
 
                 return res.status(incoming?.status).json(incoming)
             })
@@ -362,6 +365,7 @@ class b1SL {
                 if (get(err, 'response.status') == 401) {
                     let token = await this.auth()
                     if (token.status) {
+                        console.log('bu joyga tushdi tokenga')
                         return await this.postInvoices(req, res, next)
                     }
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
@@ -390,8 +394,7 @@ class b1SL {
                 }
             ],
         }
-
-        console.log(schema)
+        // console.log(schema)
 
         const axios = Axios.create({
             baseURL: `${this.api}`,
@@ -407,7 +410,7 @@ class b1SL {
         return axios
             .post(`/IncomingPayments`, schema)
             .then(async ({ data }) => {
-                await b1HANA.getInvoiceByDocEntry(get(body, 'DocEntry'))
+                await b1HANA.getInvoiceByDocEntry(get(body, 'DocEntry'), body)
                 return { status: 201 }
             })
             .catch(async (err) => {

@@ -366,7 +366,7 @@ const Resizable = ({
                                                         </div>
                                                         <div className='w-50 p-16' >
                                                             <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
-                                                                {get(item, 'U_brend', '') || '-'}
+                                                                {get(item, 'Name', '') || '-'}
                                                             </p>
                                                         </div>
                                                         <div className='w-50 p-16' >

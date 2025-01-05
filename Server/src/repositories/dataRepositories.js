@@ -112,7 +112,7 @@ class DataRepositories {
         let searchFilter = search ? `AND (
             LOWER(T0."ItemCode") LIKE LOWER('%${search}%') OR
             LOWER(T0."ItemName") LIKE LOWER('%${search}%') OR
-            LOWER(T0."U_brend") LIKE LOWER('%${search}%') OR
+            LOWER(T5."Name") LIKE LOWER('%${search}%') OR
             LOWER(T0."U_Article") LIKE LOWER('%${search}%')
         )` : '';
 
@@ -122,6 +122,7 @@ class DataRepositories {
             LEFT JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
             LEFT JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
             LEFT JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+            LEFT JOIN ${this.db}."@BREND" T5 ON T0."U_brend" = T5."Code"
             WHERE T4."ListName" = '${U_branch}' 
               AND T1."WhsCode" = '${U_branch}' 
               ${itemsFilter} 
@@ -145,11 +146,13 @@ class DataRepositories {
                    T4."ListName", 
                    T3."PriceList", 
                    T3."Price", 
-                   T3."Currency" 
+                   T3."Currency",
+                   T5."Name"
             FROM ${this.db}.OITM T0 
             LEFT JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
             LEFT JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
             LEFT JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+            LEFT JOIN ${this.db}."@BREND" T5 ON T0."U_brend" = T5."Code"
             WHERE T4."ListName" = '${U_branch}' 
               AND T1."WhsCode" = '${U_branch}' 
               ${itemsFilter} 
@@ -264,11 +267,13 @@ T1."AvgPrice",
 T4."ListName", 
 T3."PriceList", 
 T3."Price", 
-T3."Currency" 
+T3."Currency",
+T5."Name"
 FROM ${this.db}.OITM T0 
-INNER JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
-INNER JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
-INNER JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+LEFT JOIN ${this.db}.OITW T1 ON T0."ItemCode" = T1."ItemCode" 
+LEFT JOIN ${this.db}.ITM1 T3 ON T0."ItemCode" = T3."ItemCode" 
+LEFT JOIN ${this.db}.OPLN T4 ON T3."PriceList" = T4."ListNum"  
+LEFT JOIN ${this.db}."@BREND" T5 ON T0."U_brend" = T5."Code"
 WHERE T4."ListName" = '${U_branch}' 
 AND T1."WhsCode" = '${U_branch}' 
 AND T0."ItemCode" in (${items.map(el => `'${el}'`)})

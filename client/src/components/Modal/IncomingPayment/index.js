@@ -143,7 +143,6 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
         warningNotify("Summada xatolik")
         return
       }
-      console.log(clone, ' bu clone')
       setUpdateLoading(true)
       let result = await axios.post(url + `/api/invoices`, { ...clone, value }, {
         headers: {

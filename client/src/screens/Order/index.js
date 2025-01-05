@@ -393,7 +393,7 @@ const Order = () => {
           else {
             marchants = merchantList
           }
-          let naqd = marchants.find(item => item.U_merchant.toLowerCase() == 'naqd' && item.U_status == '01')
+          let naqd = marchants.find(item => item.U_merchant.toLowerCase() == (get(customerDataInvoice, 'selectMerchantId', 'naqd') || 'naqd').toLowerCase() && item.U_status == '01')
           console.log(naqd, ' bu ')
           if (naqd) {
             setCustomerDataInvoice({
@@ -977,7 +977,7 @@ const Order = () => {
                                   </div>
                                   <div className='w-50 p-16' >
                                     <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
-                                      {get(item, 'U_brend', '') || '-'}
+                                      {get(item, 'Name', '') || '-'}
                                     </p>
                                   </div>
                                   <div className='w-50 p-16' >
