@@ -275,7 +275,7 @@ class b1HANA {
                         searchQuery.$or = [
                             { ItemName: { $regex: search, $options: "i" } },
                             { ItemCode: { $regex: search, $options: "i" } },
-                            { U_brend: { $regex: search, $options: "i" } },
+                            { Name: { $regex: search, $options: "i" } },
                             { U_Article: { $regex: search, $options: "i" } }
                         ];
                     }
@@ -667,7 +667,7 @@ class b1HANA {
         try {
             let { offset, limit, status, search } = req.query
             const branch = req.user.U_branch;
-            let query = await DataRepositories.outGoing(branch,req.query);
+            let query = await DataRepositories.outGoing(branch, req.query);
             const data = await this.execute(query);
             return res.status(200).json(data)
         }

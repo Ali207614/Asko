@@ -10,8 +10,6 @@ const LaunchStyle = styled.div`
     height: 90vh;
 
     .img {
-      width: 561px;
-      height: 156px;
       animation-name: launchAnimation;
       animation-duration: 2s;
       scale: 1;

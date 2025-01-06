@@ -17,8 +17,8 @@ const Styles = styled.div`
     text-align: center;
   }
  .noBtn{
-  border: 1px solid #298AFF;
-  color:  #298AFF;
+  border: 1px solid #E41B12;
+  color:  #E41B12;
  }
 
  .title{
@@ -35,7 +35,7 @@ const Styles = styled.div`
   margin-bottom: 54px;
  }
   .yesBtn{
-  background:  #298AFF;
+  background:  #E41B12;
   color:  #FFF;
   border:none;
  }

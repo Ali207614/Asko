@@ -200,15 +200,15 @@ margin-left: 8px;
     line-height: 18px; /* 150% */
     padding: 9px 12px;
     border-radius:  8px;
-    background:  #298AFF;
+    background:  #E41B12;
     margin-left: 12px;
     outline: none;
     border:none;
     width: 130px;
   }
   .card-btn-clear{
-    color:  #298AFF;
-  border: 1px solid #298AFF;
+    color:  #E41B12;
+  border: 1px solid #E41B12;
   background-color: transparent;
 
   }

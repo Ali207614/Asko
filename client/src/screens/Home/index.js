@@ -371,12 +371,12 @@ const Home = () => {
                                 </div>
 
 
-                                {get(getMe, 'data.U_role') == 'Salesperson' && <button onClick={() => navigate('/invoice')} className='btn-head'>
-                                    Добавить
-                                </button>}
-                                {/* {<button onClick={() => navigate('/invoice')} className='btn-head'>
+                                {/* {get(getMe, 'data.U_role') == 'Salesperson' && <button onClick={() => navigate('/invoice')} className='btn-head'>
                                     Добавить
                                 </button>} */}
+                                {<button onClick={() => navigate('/invoice')} className='btn-head'>
+                                    Добавить
+                                </button>}
                             </div>
                         </div>
                         <div className='table'>

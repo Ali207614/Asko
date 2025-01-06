@@ -69,7 +69,7 @@ const LoginStyle = styled.div`
     width: 100%;
     border-radius: 12px;
     outline: none;
-    background-color: #298AFF;
+    background-color: #E41B12;
     height: 56px;
 
     color: white;

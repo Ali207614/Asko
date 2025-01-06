@@ -29,7 +29,7 @@ const InvoiceSchema = new Schema({
     U_merchantfoizi: { type: String, required: false }, // Filial kodi
     U_flayer: { type: String, required: false }, // Filial kodi
     U_vulkanizatsiya: { type: String, required: false }, // Filial kodi
-    U_schet: { type: String, required: false }, // Filial kodi
+    U_schot: { type: String, required: false }, // Filial kodi
     sap: { type: Boolean, default: true },
     Items: [
         {

@@ -1,6 +1,6 @@
 import React from 'react';
 import Style from './Style';
-import TopImage from '../../assets/images/logoAltitude.svg';
+import TopImage from '../../assets/images/144px.png';
 import { useTranslation } from 'react-i18next';
 import { get } from 'lodash';
 import { Link, NavLink, useLocation } from 'react-router-dom';

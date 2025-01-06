@@ -6,7 +6,7 @@ import { get } from 'lodash';
 import { useNavigate } from 'react-router-dom';
 import { ErrorModal } from '../../components/Modal';
 import { useTranslation } from 'react-i18next';
-import Logo from '../../assets/images/biglogAltitude.svg';
+import Logo from '../../assets/images/187px.png';
 import colors from '../../assets/style/colors';
 import offEye from '../../assets/images/off_eye.svg';
 import onEye from '../../assets/images/on_eye.svg';

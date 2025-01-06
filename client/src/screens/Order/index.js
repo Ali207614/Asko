@@ -143,6 +143,9 @@ const Order = () => {
 
   useEffect(() => {
     getUfd()
+
+    getMerchant()
+
   }, []);
 
 
@@ -204,7 +207,11 @@ const Order = () => {
       }
       setCustomerData([])
       if (!get(docEntry, 'id')) {
-        setCustomerDataInvoice({})
+        // setCustomerDataInvoice({
+        //   selectMerchantId: get(customerDataInvoice, 'selectMerchantId'),
+        //   selectMarchantFoiz: get(customerDataInvoice, 'selectMarchantFoiz'),
+        //   U_schot: get(customerDataInvoice, 'U_schot'),
+        // })
       }
     }
     return () => {
@@ -321,6 +328,10 @@ const Order = () => {
     return;
   };
 
+  useEffect(() => {
+    console.log(customerDataInvoice)
+  }, [customerDataInvoice])
+
   const getItems = (pagination) => {
     setLoading(true)
     let { link } = subQuery(get(pagination, 'filterProperty', {}))
@@ -349,13 +360,18 @@ const Order = () => {
             setLoading(false)
             setCustomer(get(orderData, 'CardName', ''))
             setCustomerCode(get(orderData, 'CardCode', ''))
+            console.log({
+              selectMerchantId: get(orderData, 'U_merchantturi'),
+              selectMarchantFoiz: get(orderData, 'U_merchantfoizi'),
+              U_schot: get(orderData, 'U_schot')
+            })
             setCustomerDataInvoice({
               ...get(orderData, 'customer'),
               selectCar: orderData.U_car,
               selectCarName: orderData?.U_markamashina,
               selectMerchantId: get(orderData, 'U_merchantturi'),
               selectMarchantFoiz: get(orderData, 'U_merchantfoizi'),
-              schet: get(orderData, 'U_schet')
+              U_schot: get(orderData, 'U_schot')
             })
             setCustomerData([{ CardCode: get(orderData, 'CardCode', ''), CardName: get(orderData, 'CardName', '') }])
             setSalesPerson(get(orderData, 'SLP'))
@@ -370,7 +386,7 @@ const Order = () => {
             setAllPageLength(get(data, '[0].LENGTH', 0) - orderData.Items.length)
 
             setMainData(data.map(item => {
-              return { ...item, value: '', Discount: '', PriceList: { ...item.PriceList, Price: Number(get(item, 'PriceList.Price', 0)) * get(getMe, 'currency.Rate') } }
+              return { ...item, value: '', Discount: '', PriceList: { ...item.PriceList, Price: roundMiddle(Number(get(item, 'PriceList.Price', 0)) * get(getMe, 'currency.Rate')) } }
             }).filter(el => !orderData.Items.map(item => item.ItemCode).includes(get(el, 'ItemCode'))))
 
 
@@ -386,21 +402,7 @@ const Order = () => {
           })
         }
         else {
-          let marchants = []
-          if (merchantList.length == 0) {
-            marchants = await getMerchant()
-          }
-          else {
-            marchants = merchantList
-          }
-          let naqd = marchants.find(item => item.U_merchant.toLowerCase() == (get(customerDataInvoice, 'selectMerchantId', 'naqd') || 'naqd').toLowerCase() && item.U_status == '01')
-          console.log(naqd, ' bu ')
-          if (naqd) {
-            setCustomerDataInvoice({
-              ...customerDataInvoice,
-              selectMerchantId: naqd.U_merchant, selectMarchantFoiz: naqd.U_Foiz, schet: naqd.U_schot
-            })
-          }
+
           setLoading(false)
 
 
@@ -443,7 +445,7 @@ const Order = () => {
   };
 
   function getMerchant() {
-    return axios
+    axios
       .get(
         url + `/api/getMerchant`,
         {
@@ -454,6 +456,15 @@ const Order = () => {
       )
       .then(({ data }) => {
         setMerchantList(data)
+
+        let marchants = data
+        let naqd = marchants.find(item => item.U_merchant.toLowerCase() == (get(customerDataInvoice, 'selectMerchantId', 'naqd') || 'naqd').toLowerCase() && item.U_status == '01')
+        if (naqd && !get(docEntry, 'id')) {
+          setCustomerDataInvoice({
+            ...customerDataInvoice,
+            selectMerchantId: naqd.U_merchant, selectMarchantFoiz: naqd.U_Foiz, U_schot: naqd.U_schot
+          })
+        }
         return data
       })
       .catch(err => {
@@ -468,7 +479,7 @@ const Order = () => {
     setAllPageLengthSelect(allPageLengthSelect + 1)
     setAllPageLength(allPageLength - 1)
     setMainData(mainData.filter(el => get(el, 'ItemCode', '') !== get(item, 'ItemCode', '')))
-    setState([{ ...item, PriceList: { ...item.PriceList, Price: Number(item.PriceList.Price || 0) + ((item.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0) / 100) } }, ...state])
+    setState([{ ...item, PriceList: { ...item.PriceList, Price: roundMiddle(Number(item.PriceList.Price || 0) + ((item.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz', 0) || 0) / 100)) } }, ...state])
     setActualData([item, ...actualData])
   }
 
@@ -539,7 +550,7 @@ const Order = () => {
       "U_merchantturi": get(customerDataInvoice, 'selectMerchantId'),
       "U_merchantfoizi": get(customerDataInvoice, 'selectMarchantFoiz'),
       "U_markamashina": get(customerDataInvoice, 'selectCarName'),
-      "U_schet": get(customerDataInvoice, 'schet'),
+      "U_schot": get(customerDataInvoice, 'U_schot'),
       "DocTotalSy": mapped.reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
       "DocumentLines": mapped.map(item => {
         let obj = {
@@ -612,7 +623,7 @@ const Order = () => {
       "U_merchantturi": get(customerDataInvoice, 'selectMerchantId'),
       "U_merchantfoizi": get(customerDataInvoice, 'selectMarchantFoiz'),
       "U_markamashina": get(customerDataInvoice, 'selectCarName'),
-      "U_schet": get(customerDataInvoice, 'schet'),
+      "U_schot": get(customerDataInvoice, 'U_schot'),
       "DocTotalSy": mapped.reduce((a, b) => a + (Number(get(b, 'PriceList.Price', 0) || 0) * Number(get(b, 'value', 1))), 0),
       "DocumentLines": mapped.map(item => {
         let obj = {
@@ -625,6 +636,7 @@ const Order = () => {
         return obj
       })
     }
+
     let body = schema
     console.log(schema)
     setOrderLoading(true)
@@ -841,8 +853,7 @@ const Order = () => {
                                   }
                                 }
                               }))
-
-                              setCustomerDataInvoice({ ...customerDataInvoice, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz', 0) || 0, schet: get(item, 'U_schet') })
+                              setCustomerDataInvoice({ ...customerDataInvoice, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz', 0) || 0, U_schot: get(item, 'U_schot') })
                               setShowDropdownMerchant(false)
                               return
                             }
@@ -944,7 +955,7 @@ const Order = () => {
                         setAllPageLength(allPageLength - filterData.length)
                         setMainData(mainData.filter(el => !filterData.map(item => item.ItemCode).includes(el.ItemCode)))
                         setState([...filterData.map(el => {
-                          return { ...el, PriceList: { ...el.PriceList, Price: Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100) } }
+                          return { ...el, PriceList: { ...el.PriceList, Price: roundMiddle(Number(el.PriceList.Price || 0) + ((el.PriceList.Price || 0) * (get(customerDataInvoice, 'selectMarchantFoiz') || 0) / 100)) } }
                         }), ...state])
                         setActualData([...filterData, ...actualData])
                       }

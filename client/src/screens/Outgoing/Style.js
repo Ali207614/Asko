@@ -92,7 +92,7 @@ const Style = styled.div`
     width: 121px;
     padding: 9px 12px;
     border-radius:  8px;
-    background:  #298AFF;
+    background:  #E41B12;
 
     color:  #FFF;
     font-size: 12px;

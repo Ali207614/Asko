@@ -96,7 +96,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
             let naqd = merchants.find(item => item.U_merchant.toLowerCase() == 'naqd' && item.U_status == '02')
             if (naqd) {
               await setClone({
-                ...data, selectMerchantId: naqd.U_merchant, selectMarchantFoiz: naqd.U_Foiz, schet: naqd.U_schot
+                ...data, selectMerchantId: naqd.U_merchant, selectMarchantFoiz: naqd.U_Foiz, U_schot: naqd.U_schot
               })
             }
           }
@@ -212,7 +212,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
                     merchantList.filter(item => item.U_status == '02').map((item, i) => {
                       return (<li style={{ height: '30px' }} key={i} onClick={() => {
                         if (get(clone, 'selectMerchantId') != get(item, 'U_merchant')) {
-                          setClone({ ...clone, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz'), schet: get(item, 'U_schot') })
+                          setClone({ ...clone, selectMerchantId: get(item, 'U_merchant'), selectMarchantFoiz: get(item, 'U_Foiz'), U_schot: get(item, 'U_schot') })
                           setShowDropdownMerchant(false)
                           return
                         }

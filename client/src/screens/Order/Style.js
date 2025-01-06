@@ -68,7 +68,7 @@ li{
     height: 36px;
   padding: 9px 12px;
   border-radius: 8px;
-  background: #298AFF;
+  background: #E41B12;
   color: #FFF;
   font-size: 12px;
   font-style: normal;
@@ -465,7 +465,7 @@ li{
   width: 0;
 }
 .borderRed{
-  border:1px solid #298AFF;
+  border:1px solid #E41B12;
 }
 /* .tab-table::-webkit-scrollbar-track {
   background: #f1f1f1; 

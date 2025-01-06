@@ -164,7 +164,6 @@ class b1SL {
                     }
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
                 } else {
-                    console.log(err)
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
 
                 }
@@ -177,7 +176,8 @@ class b1SL {
 
         delete body.selectMerchantId
         delete body.selectMarchantFoiz
-        delete body.schet
+        delete body.schot
+        delete body.U_schot
         delete body.selectCar
 
         const axios = Axios.create({
@@ -205,7 +205,6 @@ class b1SL {
                     }
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
                 } else {
-                    console.log(err)
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
 
                 }
@@ -259,12 +258,10 @@ class b1SL {
                         "U_vulkanizatsiya": get(body, 'U_vulkanizatsiya') ? 'Да' : (vulkanUpdate ? 'Да' : "Нет")
                     }
                     let update = await this.updateInvoice(get(body, 'DocEntry'), obj)
-                    console.log(update)
                     await sleepNow(300)
                 }
 
-                console.log(body, ' bu body')
-                let incoming = await this.postIncomingPayment(body, get(body, 'schet'))
+                let incoming = await this.postIncomingPayment(body, get(body, 'U_schot'))
 
 
 
@@ -319,7 +316,6 @@ class b1SL {
             })
         }
 
-        console.log(schema, ' bu schema')
 
         const axios = Axios.create({
             baseURL: `${this.api}`,
@@ -357,7 +353,7 @@ class b1SL {
                 await sleepNow(300)
 
                 let items = await b1HANA.getInvoiceItems(get(body, 'Items', []).map(item => item.ItemCode), get(body, 'U_branch'))
-                let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry') }, get(body, 'U_schet'))
+                let incoming = await this.postIncomingPayment({ ...body, DocEntry: get(data, 'DocEntry') }, get(body, 'U_schot'))
 
                 return res.status(incoming?.status).json(incoming)
             })
@@ -365,12 +361,10 @@ class b1SL {
                 if (get(err, 'response.status') == 401) {
                     let token = await this.auth()
                     if (token.status) {
-                        console.log('bu joyga tushdi tokenga')
                         return await this.postInvoices(req, res, next)
                     }
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: token.message })
                 } else {
-                    console.log(get(err, 'response.data.error.message.value'), ' bu joyda err')
                     return res.status(get(err, 'response.status', 400) || 400).json({ status: false, message: get(err, 'response.data.error.message.value') })
 
                 }
@@ -394,7 +388,6 @@ class b1SL {
                 }
             ],
         }
-        // console.log(schema)
 
         const axios = Axios.create({
             baseURL: `${this.api}`,
@@ -421,7 +414,6 @@ class b1SL {
                     }
                     return { status: get(err, 'response.status', 400) || 400, message: get(err, 'response.data.error.message.value') }
                 } else {
-                    console.log(get(err, 'response.data.error.message.value'), ' err ')
                     return { status: get(err, 'response.status', 400) || 400, message: get(err, 'response.data.error.message.value') }
                 }
             });
