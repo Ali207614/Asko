@@ -86,10 +86,12 @@ class DataRepositories {
                    T1."Quantity", 
                    T1."Price", 
                    T1."DiscPrcnt", 
-                   T1."LineTotal"
+                   T1."LineTotal",
+                   T3."ItmsGrpCod"
             FROM ${this.db}.OINV T0
             INNER JOIN ${this.db}.INV1 T1 ON T1."DocEntry" = T0."DocEntry"
             INNER JOIN ${this.db}.OCRD T2 ON T0."CardCode" = T2."CardCode"
+            INNER JOIN ${this.db}.OITM T3 on T3."ItemCode" = T1."ItemCode"
             WHERE T0."U_branch" = '${U_branch}' 
               AND T0."CANCELED" = 'N' 
               AND (T0."DocStatus" = 'O' OR T0."DocStatus" = 'C') 
@@ -241,10 +243,12 @@ class DataRepositories {
        T1."Quantity", 
        T1."Price", 
        T1."DiscPrcnt", 
-       T1."LineTotal"
+       T1."LineTotal",
+       T3."ItmsGrpCod"
 FROM ${this.db}.OINV T0
 INNER JOIN ${this.db}.INV1 T1 ON T1."DocEntry" = T0."DocEntry"
 INNER JOIN ${this.db}.OCRD T2 ON T0."CardCode" = T2."CardCode"
+INNER JOIN ${this.db}.OITM T3 ON T3."ItemCode" = T1."ItemCode"
   AND T0."CANCELED" = 'N' 
   AND (T0."DocStatus" = 'O' OR T0."DocStatus" = 'C') and T0."DocEntry" = '${doc}'`
         return sql

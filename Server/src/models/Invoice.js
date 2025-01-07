@@ -39,6 +39,7 @@ const InvoiceSchema = new Schema({
             Price: { type: Number, required: false },
             DiscPrcnt: { type: Number, default: 0 },
             LineTotal: { type: Number, required: false },
+            ItmsGrpCod: { type: String, required: false },
         }
     ]
 }, { timestamps: true });

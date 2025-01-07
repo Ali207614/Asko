@@ -318,7 +318,6 @@ class b1HANA {
                 }
             }
             const query = await DataRepositories.getItems(req.query, req.user);
-            console.log(query)
             let data = await this.execute(query);
             let newItems = []
             if (data.length) {

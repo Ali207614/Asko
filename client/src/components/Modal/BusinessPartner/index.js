@@ -1,6 +1,10 @@
 import React, { memo, useEffect, useState } from 'react';
 import Styles from './Styles';
 import Modal from 'react-modal';
+
+import PhoneInput from 'react-phone-input-2'
+import 'react-phone-input-2/lib/style.css'
+
 import { useTranslation } from 'react-i18next';
 import { errorNotify, statuses, successNotify, warehouseList } from '../../Helper';
 import arrowDown from '../../../assets/images/arrow-down.svg';
@@ -93,7 +97,7 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
           ...Array(20 - get(customerDataInvoice, 'Cars', []).length).fill({ U_car_name: '', U_car_code: '' }) // Bo'sh elementlar bilan to'ldiramiz
         ]);
         setClone({ ...customerDataInvoice })
-        setPartner({ ...customerDataInvoice })
+        setPartner({ ...customerDataInvoice, U_gender: get(customerDataInvoice, 'U_gender', '01') || '01' })
       },
       close: () => {
         setIsOpenModal(false)
@@ -335,11 +339,35 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
               <input value={partner.CardName} onChange={(e) => setPartner({ ...partner, CardName: e.target.value })} type="text" className='order-inp' placeholder='CardName' />
             </div>
             <div className='partner-item'>
-              <input value={partner.Phone1} onChange={(e) => setPartner({ ...partner, Phone1: e.target.value })} type="text" className='order-inp' placeholder='Phone1' />
+              <PhoneInput
+                country={'uz'} // O‘zbekistonga mos kodni avtomatik tanlash
+                value={partner?.Phone1 || ''} // Telefon raqam qiymati
+                onChange={(value) => {
+                  setPartner({ ...partner, Phone1: value }); // To‘g‘ri qiymatni saqlash
+                }}
+                disableDropdown={true} // Mamlakatlar ro‘yxatini yashirish
+                countryCodeEditable={false} // Kodni o‘zgartirishni cheklash
+                placeholder='90 123 45 67' // Raqamlarni kiritish uchun namuna
+              />
+
             </div>
             <div className='partner-item'>
-              <input value={partner.Phone2} onChange={(e) => setPartner({ ...partner, Phone2: e.target.value })} type="text" className='order-inp' placeholder='Phone2' />
+              <PhoneInput
+                country={'uz'} // O‘zbekistonga mos kodni avtomatik tanlash
+                value={partner?.Phone2 || ''} // Telefon raqam qiymati
+                onChange={(value) => {
+                  console.log(value)
+                  setPartner({ ...partner, Phone2: value });
+                }}
+                disableDropdown={true} // Mamlakatlar ro‘yxatini yashirish
+                countryCodeEditable={false} // Kodni o‘zgartirishni cheklash
+                placeholder='90 123 45 67' // Raqamlarni kiritish uchun namuna
+              />
             </div>
+
+
+          </div>
+          <div style={{ margin: '15px 0px' }} className='d-flex align'>
             <div className='right-limit partner-item' >
               <button style={{ height: '45.78px' }} onClick={() => setShowGenderState(!genderState)} className={`right-dropdown`}>
                 <p className='right-limit-text'>{gender.find(item => item.id == get(partner, 'U_gender'))?.name}</p>
@@ -359,9 +387,6 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
                 }
               </ul>
             </div>
-
-          </div>
-          <div style={{ margin: '15px 0px' }} className='d-flex align'>
             <div className='partner-item' >
               <input value={partner.U_dateofbirth} onChange={(e) => setPartner({ ...partner, U_dateofbirth: e.target.value })} type="date" className='order-inp' placeholder='Birthday' />
             </div>
@@ -474,7 +499,6 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
                                   <ul style={{ zIndex: 1 }} className={`dropdown-menu  ${(showDropDownCarName === i && carBrandListName.length) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
                                     {
                                       carBrandListName.length ? ['-', ...carBrandListName.filter(item => item.FldValue.toLowerCase().includes(carBrandList.find(el => el.FldValue == cars[i]?.U_marka)?.Descr.toLowerCase()))].map((item, ind) => {
-                                        console.log(carBrandList.find(el => el.FldValue == cars[i]?.U_marka)?.Descr)
                                         return (<li key={ind} onClick={() => {
                                           if (cars[i]?.U_car_name != get(item, 'FldValue')) {
                                             const updatedCars = cars.map((car, index) =>
