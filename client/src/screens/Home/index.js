@@ -382,21 +382,15 @@ const Home = () => {
                         <div className='table'>
                             <div className='table-head'>
                                 <ul className='table-head-list d-flex align  justify'>
-                                    {/* <li className='table-head-item'>DocNum</li> */}
-                                    <li className='table-head-item  d-flex align '>
-                                        <input checked={mainCheck} className='m-right-16 inp-checkbox' onClick={() => {
-                                            if (mainCheck) {
-                                                setSelect([])
-                                            }
-                                            else {
-                                                setSelect([...mainData.map((item, i) => (i + 1))])
-                                            }
-                                            setMainCheck(!mainCheck)
-                                        }} type="checkbox" name="checkbox" />
+                                    <li className='table-head-item w-50'>
+                                        ID
+                                    </li>
+                                    <li className='table-head-item  w-70'>
                                         Контрагент
                                     </li>
                                     <li className='table-head-item w-70'>Телефон</li>
                                     <li className='table-head-item w-70'>Номер машины</li>
+                                    <li className='table-head-item w-70'>Мерчант</li>
                                     <li className='table-head-item w-70'>Дата регистрации</li>
                                     <li className='table-head-item w-70'>Всего</li>
                                     <li className='table-head-item w-70'>Закрытая сумма</li>
@@ -413,54 +407,55 @@ const Home = () => {
                                                     return (
                                                         <li key={i} className={`table-body-item ${activeData === (i + 1) ? 'active-table' : ''}`}>
                                                             <div className='table-item-head d-flex align  justify'>
-                                                                <div className='d-flex align  w-100 p-16'>
-                                                                    <input checked={select.find(item => item == (i + 1))} className='m-right-16 inp-checkbox' onClick={(e) => {
-                                                                        if (select.find(item => item == (i + 1))) {
-                                                                            setSelect([...select.filter(item => item != (i + 1))])
-                                                                        }
-                                                                        else {
-                                                                            setSelect([...select, (i + 1)])
-                                                                        }
-                                                                    }} type="checkbox" name="checkbox" />
-                                                                    <p className='table-body-text truncated-text ' style={{ width: '200px' }} title={get(item, 'CardName', '')} onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
+                                                                <div className=' w-50 p-16'>
+                                                                    <p className='table-body-text truncated-text w-50' title={get(item, 'DocEntry', '')} onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
+                                                                        {get(item, 'DocEntry', '-') || '-'}
+                                                                    </p>
+                                                                </div>
+                                                                <div className=' w-70 p-16'>
+                                                                    <p className='table-body-text truncated-text w-70 ' title={get(item, 'CardName', '')} onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                         {get(item, 'CardName', '')}
                                                                     </p>
                                                                 </div>
-
-
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text '>
+                                                                    <p className='table-body-text w-70'>
                                                                         {get(item, 'Phone1', '-') || '-'}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text '>
+                                                                    <p className='table-body-text w-70'>
                                                                         {get(item, 'U_car', '') || 'Нет'}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text '>
+                                                                    <p className='table-body-text w-70'>
+                                                                        {get(item, 'U_merchantturi', '')} - {get(item, 'U_merchantfoizi')} %
+                                                                    </p>
+                                                                </div>
+                                                                <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
+                                                                    <p className='table-body-text w-70'>
                                                                         {moment(get(item, 'DocDate', '')).format("DD-MM-YYYY")}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text '>
+                                                                    <p className='table-body-text w-70'>
                                                                         {formatterCurrency(Number(get(item, 'DocTotalSy', 0)), 'UZS')}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text '>
+                                                                    <p className='table-body-text w-70'>
                                                                         {formatterCurrency(
                                                                             Number(get(item, 'PaidSys', 0)), 'UZS')}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text'>
+                                                                    <p className='table-body-text w-70'>
                                                                         {formatterCurrency((Number(get(item, 'DocTotalSy', 0)) - Number(get(item, 'PaidSys', 0))), 'UZS')}
                                                                     </p>
                                                                 </div>
+
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <button style={{ color: statuses[get(item, 'status', '1')].color, backgroundColor: statuses[get(item, 'status', '1')].backgroundColor }} className='table-body-text status-button'>
+                                                                    <button style={{ color: statuses[get(item, 'status', '1')].color, backgroundColor: statuses[get(item, 'status', '1')].backgroundColor, width: '100%' }} className='table-body-text status-button'>
                                                                         {statuses[get(item, 'status', '1')].name}
                                                                     </button>
                                                                 </div>

@@ -157,7 +157,7 @@ class DataRepositories {
               AND T1."WhsCode" = '${U_branch}' 
               ${itemsFilter} 
               ${searchFilter} 
-            ORDER BY T0."ItemName"
+            ORDER BY T1."OnHand" DESC
             ${pagination}
         `;
     }

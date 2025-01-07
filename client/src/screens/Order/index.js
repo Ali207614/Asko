@@ -328,9 +328,6 @@ const Order = () => {
     return;
   };
 
-  useEffect(() => {
-    console.log(customerDataInvoice)
-  }, [customerDataInvoice])
 
   const getItems = (pagination) => {
     setLoading(true)
@@ -360,11 +357,6 @@ const Order = () => {
             setLoading(false)
             setCustomer(get(orderData, 'CardName', ''))
             setCustomerCode(get(orderData, 'CardCode', ''))
-            console.log({
-              selectMerchantId: get(orderData, 'U_merchantturi'),
-              selectMarchantFoiz: get(orderData, 'U_merchantfoizi'),
-              U_schot: get(orderData, 'U_schot')
-            })
             setCustomerDataInvoice({
               ...get(orderData, 'customer'),
               selectCar: orderData.U_car,
@@ -389,12 +381,33 @@ const Order = () => {
               return { ...item, value: '', Discount: '', PriceList: { ...item.PriceList, Price: roundMiddle(Number(get(item, 'PriceList.Price', 0)) * get(getMe, 'currency.Rate')) } }
             }).filter(el => !orderData.Items.map(item => item.ItemCode).includes(get(el, 'ItemCode'))))
 
-
             setState(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString() }
             }).map(el => {
-              return { ...el, PriceList: { ...el.PriceList, Price: roundMiddle((Number(el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) + (((el.PriceList.Price || 0) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 0) || 0) / 100)) } }
+              return {
+                ...el, PriceList: {
+                  ...el.PriceList, Price: roundMiddle(
+                    roundMiddle(Number(el.PriceList.Price || 1) * get(getMe, 'currency.Rate', 0)) +
+                    roundMiddle(((el.PriceList.Price || 1) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 1) || 1) / 100))
+                }
+              }
             }))
+
+            console.log(orderData.Items.map(item => {
+              return { ...item, value: Number(item.Quantity).toString() }
+            }).map(el => {
+              return {
+                ...el, PriceList: {
+                  ...el.PriceList, Price: (
+                    roundMiddle(Number(el.PriceList.Price || 1) * get(getMe, 'currency.Rate', 0)) +
+                    roundMiddle(((el.PriceList.Price || 1) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 1) || 1) / 100))
+                },
+                son: roundMiddle(((el.PriceList.Price || 1) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 1) || 1) / 100),
+                son2: roundMiddle(Number(el.PriceList.Price || 1) * get(getMe, 'currency.Rate', 0))
+              }
+            }))
+
+
             setActualData(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString(), PriceList: { ...item.PriceList, Price: roundMiddle(Number(item.PriceList.Price || 0) * get(getMe, 'currency.Rate')) } }
             }))
@@ -638,7 +651,6 @@ const Order = () => {
     }
 
     let body = schema
-    console.log(schema)
     setOrderLoading(true)
     axios
       .put(
@@ -775,10 +787,10 @@ const Order = () => {
                   </ul> : ''}
                 </div>
                 <div className='w-70'>
-                  <input value={get(date, 'DocDate', '')} onChange={(e) => setDate({ ...date, DocDate: e.target.value })} type="date" className='order-inp' placeholder='Doc Date' />
+                  <input disabled={get(docEntry, 'id')} value={get(date, 'DocDate', '')} onChange={(e) => setDate({ ...date, DocDate: e.target.value })} type="date" className='order-inp' placeholder='Doc Date' />
                 </div>
                 <div className='w-70'>
-                  <input value={get(date, 'DocDueDate', '')} onChange={(e) => setDate({ ...date, DocDueDate: e.target.value })} type="date" className='order-inp' placeholder='Due Date' />
+                  <input disabled={get(docEntry, 'id')} value={get(date, 'DocDueDate', '')} onChange={(e) => setDate({ ...date, DocDueDate: e.target.value })} type="date" className='order-inp' placeholder='Due Date' />
                 </div>
 
                 <div className='w-70'>
