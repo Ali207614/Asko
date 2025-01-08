@@ -48,6 +48,7 @@ const Home = () => {
     const [mainCheck, setMainCheck] = useState(false)
     const [mainData, setMainData] = useState([])
     const [disCount, setDisCount] = useState([])
+    const [discountGroup, setDiscountGroup] = useState([])
 
     const [filterProperty, setFilterProperty] = useState(get(getFilter, 'filterProperty', {}))
 
@@ -114,6 +115,25 @@ const Home = () => {
 
         return;
     };
+    const getDiscountGroups = () => {
+        axios
+            .get(
+                url + `/api/getDiscountGroups`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${get(getMe, 'token')}`,
+                    }
+                }
+            )
+            .then(({ data }) => {
+                setDiscountGroup(data)
+            })
+            .catch(err => {
+                errorNotify(`Valyuta yuklashda muomo yuzaga keldi`)
+            });
+
+        return;
+    };
     const getDisCount = () => {
         axios
             .get(
@@ -139,6 +159,7 @@ const Home = () => {
 
     useEffect(() => {
         getCurrency()
+        getDiscountGroups()
         if (get(getMe, 'data.U_role') == 'Cashier') {
             getDisCount()
         }
@@ -476,7 +497,7 @@ const Home = () => {
                                                                     }
                                                                 </button>
                                                                 {get(getMe, 'data.U_role') == 'Cashier' && <button onClick={() => {
-                                                                    incomingRef.current?.open(item, disCount);
+                                                                    incomingRef.current?.open({ item, disCount, discountGroup });
                                                                 }} className='table-item-btn d-flex align'>
                                                                     Оплата <img src={editIcon} alt="arrow right" />
                                                                 </button>}

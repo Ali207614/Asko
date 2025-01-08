@@ -171,6 +171,13 @@ class DataRepositories {
         return sql
     }
 
+    getDiscountGroups() {
+        let sql = `
+        SELECT T0."U_group_code" FROM ${this.db}."@DISCOUNTGROUP" T0 
+        `
+        return sql
+    }
+
     getAllBusinessPartners() {
         let sql = `
         SELECT T0."U_provincy", T0."U_region", T0."U_whwerasko",T0."U_gender" , T0."U_dateofbirth" , T0."CardCode", T0."CardName", T0."CardType", T0."GroupCode", T0."Phone1", T0."Phone2", T0."Balance" FROM ${this.db}.OCRD T0 WHERE T0."CardType" ='C'`

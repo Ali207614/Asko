@@ -16,6 +16,7 @@ const Currency = require("../models/Currency");
 const Merchant = require("../models/Merchant");
 const UserDefinedField = require("../models/UserDefinedField");
 const DisCount = require("../models/DisCount");
+const DiscountGroup = require("../models/DisCountGroup");
 require('dotenv').config();
 
 
@@ -699,6 +700,20 @@ class b1HANA {
         const data = await this.execute(query);
         if (data.length) {
             await DisCount.create(data)
+        }
+        return res.status(200).json(data)
+    }
+
+    getDiscountGroups = async (req, res, next) => {
+        let count = await DiscountGroup.estimatedDocumentCount()
+        if (count > 0) {
+            let result = await DiscountGroup.find()
+            return res.status(200).json(result)
+        }
+        let query = await DataRepositories.getDiscountGroups();
+        const data = await this.execute(query);
+        if (data.length) {
+            await DiscountGroup.create(data)
         }
         return res.status(200).json(data)
     }

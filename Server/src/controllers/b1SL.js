@@ -172,7 +172,7 @@ class b1SL {
 
     createBusinessPartner = async (req, res, next) => {
         let body = req.body
-        body = { ...req.body, "Series": 82, Currency: '##' }
+        body = { ...req.body, "Series": 84, Currency: '##' }
 
         delete body.selectMerchantId
         delete body.selectMarchantFoiz

@@ -55,6 +55,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
 
   const [clone, setClone] = useState({})
   const [disCount, setDiscount] = useState([])
+  const [discountGroup, setDiscountGroup] = useState([])
   const [checked, setChecked] = useState(false);
   const [checked2, setChecked2] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -64,6 +65,8 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
     ? Number(get(disCount.find(item => item.U_name_disc == 'FLAYER'), 'U_sum_disc', 0) || 0) : 0)
     + ((get(clone, 'U_vulkanizatsiya2', '') && get(clone, 'U_vulkanizatsiya') != 'Да')
       ? Number(get(disCount.find(item => item.U_name_disc == 'VULKANIZATSIYA'), 'U_sum_disc', 0) || 0) : 0)
+
+  let disabledDis = Boolean(get(clone, 'Items', []).find(el => discountGroup.map(d => d.U_group_code).includes(el.ItmsGrpCod)))
 
   const handleChange = nextChecked => {
     setClone({ ...clone, U_flayer2: nextChecked })
@@ -77,33 +80,35 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
 
   useEffect(() => {
     const ref = {
-      open: async (data, discount) => {
-        setDiscount(discount)
+      open: async ({ item, disCount, discountGroup }) => {
+        setDiscount(disCount)
+        setDiscountGroup(discountGroup)
+
         setIsOpenModal(true)
 
-        if (get(data, 'U_flayer') == 'Да') {
+        if (get(item, 'U_flayer') == 'Да') {
           setChecked(true);
           await setClone({ ...clone, U_flayer2: true, U_flayer: "Да" })
         }
-        if (get(data, 'U_vulkanizatsiya') == 'Да') {
+        if (get(item, 'U_vulkanizatsiya') == 'Да') {
           setChecked2(true);
           await setClone({ ...clone, U_vulkanizatsiya2: true, U_vulkanizatsiya: 'Да' })
         }
-        if (get(data, 'DocEntry')) {
+        if (get(item, 'DocEntry')) {
           let merchants = await getMerchant()
           if (merchants.length) {
             setMerchantList(merchants)
             let naqd = merchants.find(item => item.U_merchant.toLowerCase() == 'naqd' && item.U_status == '02')
             if (naqd) {
               await setClone({
-                ...data, selectMerchantId: naqd.U_merchant, selectMarchantFoiz: naqd.U_Foiz, U_schot: naqd.U_schot
+                ...item, selectMerchantId: naqd.U_merchant, selectMarchantFoiz: naqd.U_Foiz, U_schot: naqd.U_schot
               })
             }
           }
 
         }
         else {
-          setClone({ ...data })
+          setClone({ ...item })
 
         }
       },
@@ -234,7 +239,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
                 <Switch
                   onChange={handleChange}
                   checked={checked}
-                  disabled={(get(clone, 'U_flayer') == 'Да')}
+                  disabled={(get(clone, 'U_flayer') == 'Да') || !disabledDis}
                   className="react-switch"
                 />
               </label>
@@ -245,7 +250,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
                 <Switch
                   onChange={handleChange2}
                   checked={checked2}
-                  disabled={(get(clone, 'U_vulkanizatsiya') == 'Да')}
+                  disabled={(get(clone, 'U_vulkanizatsiya') == 'Да') || !disabledDis}
                   className="react-switch"
                 />
               </label>

@@ -102,6 +102,7 @@ const Order = () => {
   const [groups, setGroups] = useState([])
 
   const [merchantList, setMerchantList] = useState([])
+  const [provincy, setProvincy] = useState([])
   const [carBrandList, setCarBrandList] = useState([])
   const [carBrandListName, setCarBrandListName] = useState([])
 
@@ -163,6 +164,7 @@ const Order = () => {
       .then(({ data }) => {
         setWhereKnow(data.filter(item => item.TableID == 'OCRD' && item.FieldID == 0))
         setRegion(data.filter(item => item.TableID == 'OCRD' && item.FieldID == 3))
+        setProvincy(data.filter(item => item.TableID == 'OCRD' && item.FieldID == 4))
         setCarBrandList(data.filter(item => item.TableID == '@CARCODE' && item.FieldID == 4))
         setCarBrandListName(data.filter(item => item.TableID == '@CARCODE' && item.FieldID == 3))
       })
@@ -295,23 +297,7 @@ const Order = () => {
 
     return;
   };
-  const getSalesPerson = () => {
-    return axios
-      .get(
-        url + `/api/sales` ,
-      )
-      .then(({ data }) => {
-        setSalesPersonList(get(data, 'value', []))
-        if (filterData.length == 0) {
-          getFilterItemData()
-        }
-      })
-      .catch(err => {
-        errorNotify("SalesPerson not found")
-      });
 
-    return;
-  };
 
   const getFilterItemData = () => {
     return axios
@@ -393,20 +379,6 @@ const Order = () => {
               }
             }))
 
-            console.log(orderData.Items.map(item => {
-              return { ...item, value: Number(item.Quantity).toString() }
-            }).map(el => {
-              return {
-                ...el, PriceList: {
-                  ...el.PriceList, Price: (
-                    roundMiddle(Number(el.PriceList.Price || 1) * get(getMe, 'currency.Rate', 0)) +
-                    roundMiddle(((el.PriceList.Price || 1) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 1) || 1) / 100))
-                },
-                son: roundMiddle(((el.PriceList.Price || 1) * get(getMe, 'currency.Rate')) * (get(orderData, 'U_merchantfoizi', 1) || 1) / 100),
-                son2: roundMiddle(Number(el.PriceList.Price || 1) * get(getMe, 'currency.Rate', 0))
-              }
-            }))
-
 
             setActualData(orderData.Items.map(item => {
               return { ...item, value: Number(item.Quantity).toString(), PriceList: { ...item.PriceList, Price: roundMiddle(Number(item.PriceList.Price || 0) * get(getMe, 'currency.Rate')) } }
@@ -415,18 +387,15 @@ const Order = () => {
           })
         }
         else {
-
           setLoading(false)
-
-
-
           setMainData(data.map(item => {
             return { ...item, value: '', Discount: '', PriceList: { ...item.PriceList, Price: roundMiddle(Number(get(item, 'PriceList.Price', 0)) * get(getMe, 'currency.Rate')) } }
           }))
           setAllPageLength(get(data, '[0].LENGTH', 0))
-          if (groups.length == 0) {
-            getGroups()
-          }
+
+        }
+        if (groups.length == 0) {
+          getGroups()
         }
       })
       .catch(err => {
@@ -571,7 +540,8 @@ const Order = () => {
           "Dscription": get(item, 'ItemName', ''),
           "Quantity": Number(get(item, 'value', 0)),
           "WarehouseCode": get(getMe, 'data.U_branch'),
-          "Price": get(item, 'PriceList.Price')
+          "Price": get(item, 'PriceList.Price'),
+          "ItmsGrpCod": get(item, 'ItmsGrpCod')
         }
         return obj
       })
@@ -644,7 +614,8 @@ const Order = () => {
           "Dscription": get(item, 'ItemName', ''),
           "Quantity": Number(get(item, 'value', 0)),
           "WarehouseCode": get(getMe, 'data.U_branch'),
-          "Price": get(item, 'PriceList.Price')
+          "Price": get(item, 'PriceList.Price'),
+          "ItmsGrpCod": get(item, 'ItmsGrpCod')
         }
         return obj
       })
@@ -754,7 +725,7 @@ const Order = () => {
               <div className="order-head-data d-flex align justify">
                 <div style={{ width: "10%" }}>
                   <button onClick={() => {
-                    businessPartner.current?.open(setCustomerDataInvoice, customerDataInvoice, whereKnow, carBrandList, carBrandListName, region);
+                    businessPartner.current?.open({ setCustomerDataInvoice, customerDataInvoice, whereKnow, carBrandList, carBrandListName, region, provincy, customer });
                   }} className='btn-businesPartner'>
                     <img width={20} height={20} src={rightButton} alt="link-busines-partner" />
                   </button>
@@ -950,7 +921,7 @@ const Order = () => {
               <div className='table-head'>
                 <ul className='table-head-list d-flex align  justify'>
                   <li className='table-head-item w-50'>Код</li>
-                  <li className='table-head-item w-100'>Продукция</li>
+                  <li className='table-head-item w-70'>Продукция</li>
                   <li className='table-head-item w-50'>Бранд</li>
                   <li className='table-head-item w-50'>Мера</li>
                   <li className='table-head-item w-50'>Цена</li>
@@ -993,13 +964,13 @@ const Order = () => {
                                       {get(item, 'ItemCode', '')}
                                     </p>
                                   </div>
-                                  <div className='w-100 p-16' >
-                                    <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                  <div className='w-70 p-16' >
+                                    <p style={{ width: "200px" }} className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                       {get(item, 'ItemName', '') || '-'}
                                     </p>
                                   </div>
                                   <div className='w-50 p-16' >
-                                    <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                    <p style={{ width: "145px" }} className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                       {get(item, 'Name', '') || '-'}
                                     </p>
                                   </div>
@@ -1009,7 +980,7 @@ const Order = () => {
                                     </p>
                                   </div>
                                   <div className='w-50 p-16' >
-                                    <p className='table-body-text 50'>
+                                    <p className='table-body-text '>
                                       {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), 'UZS')}
                                     </p>
                                   </div>

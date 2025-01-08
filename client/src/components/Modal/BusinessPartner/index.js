@@ -25,7 +25,7 @@ const customStyles = {
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
     border: 'none',
-    width: "900px",
+    width: "960px",
     padding: 0,
     overflow: 'none',
     borderRadius: 0
@@ -66,10 +66,14 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
   const [showDropDownCarName, setShowDropDownCarName] = useState([]);
 
   const [showDropWhere, setShowDropWhere] = useState(false);
+  const [showPprovincy, setShowPprovincy] = useState(false);
+
+
   const [showDropRegion, setShowDropRegion] = useState(false);
   const [whereKnow, setWhereKnow] = useState([]);
   const [carBrandList, serCarBrandList] = useState([]);
   const [carBrandListName, serCarBrandListName] = useState([]);
+  const [provincy, setProvincy] = useState([]);
   const [region, setRegion] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -86,9 +90,14 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
 
   useEffect(() => {
     const ref = {
-      open: (setCustomerDataInvoice, customerDataInvoice, whereKnow, carBrandList, carBrandListName, region) => {
+      open: ({ customer, setCustomerDataInvoice, customerDataInvoice, whereKnow, carBrandList, carBrandListName, region, provincy }) => {
+        console.log(customer, ' bu customer')
+        if (!customer) {
+          customerDataInvoice = []
+        }
         setRegion(region)
         setWhereKnow(whereKnow.sort((a, b) => a.FldValue.length - b.FldValue.length))
+        setProvincy(provincy)
         serCarBrandList(carBrandList)
         serCarBrandListName(carBrandListName)
         setIsOpenModal(true);
@@ -98,6 +107,7 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
         ]);
         setClone({ ...customerDataInvoice })
         setPartner({ ...customerDataInvoice, U_gender: get(customerDataInvoice, 'U_gender', '01') || '01' })
+
       },
       close: () => {
         setIsOpenModal(false)
@@ -412,16 +422,16 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
             </div>
 
             <div className='right-limit partner-item' >
-              <button style={{ height: '45.78px' }} onClick={() => setShowDropRegion(!showDropRegion)} className={`right-dropdown`}>
-                <p className='right-limit-text'>{get(partner, 'U_region', '-')}</p>
+              <button style={{ height: '45.78px', width: '210px' }} onClick={() => setShowDropRegion(!showDropRegion)} className={`right-dropdown`}>
+                <p className='right-limit-text'>{region.find(item => item.FldValue == get(partner, 'U_region', '-'))?.Descr || '-'}</p>
                 <img src={arrowDown} className={showDropRegion ? "up-arrow" : ""} alt="arrow-down-img" />
               </button>
               <ul style={{ zIndex: 1, top: '48px' }} className={`dropdown-menu  ${(showDropRegion) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
                 {
-                  region.map((item, ind) => {
+                  ['', ...region].map((item, ind) => {
                     return (<li key={ind} onClick={() => {
                       if (item.FldValue != get(partner, 'U_region')) {
-                        setPartner({ ...partner, U_region: item.FldValue });
+                        setPartner({ ...partner, U_region: item.FldValue, U_provincy: '' });
                       }
                       setShowDropRegion(false)
                       return
@@ -430,15 +440,25 @@ const BusinessPartner = ({ getRef, setCustomerDataInvoice, customerDataInvoice, 
                 }
               </ul>
             </div>
-
-            <div className='partner-item' >
-              <input value={partner.U_provincy} onChange={(e) => setPartner({ ...partner, U_provincy: e.target.value })} type="text" className='order-inp' placeholder='Region' />
+            <div className='right-limit partner-item' >
+              <button style={{ height: '45.78px', width: '210px' }} onClick={() => setShowPprovincy(!showPprovincy)} className={`right-dropdown`}>
+                <p className='right-limit-text'>{provincy.find(item => item.FldValue == get(partner, 'U_provincy', '-'))?.Descr || '-'}</p>
+                <img src={arrowDown} className={showPprovincy ? "up-arrow" : ""} alt="arrow-down-img" />
+              </button>
+              <ul style={{ zIndex: 1, top: '48px' }} className={`dropdown-menu  ${(showPprovincy) ? "display-b" : "display-n"}`} aria-labelledby="dropdownMenuButton1">
+                {
+                  ['', ...provincy.filter(el => get(el, 'FldValue', '').split('.')[0] == get(partner, 'U_region', ''))].map((item, ind) => {
+                    return (<li key={ind} onClick={() => {
+                      if (item.FldValue != get(partner, 'U_provincy')) {
+                        setPartner({ ...partner, U_provincy: item.FldValue });
+                      }
+                      setShowPprovincy(false)
+                      return
+                    }} className={`dropdown-li ${item.FldValue == get(partner, 'U_provincy') ? 'dropdown-active' : ''}`}><a className="dropdown-item" href="#">{get(item, 'Descr')}</a></li>)
+                  })
+                }
+              </ul>
             </div>
-
-
-
-
-
 
           </div>
 

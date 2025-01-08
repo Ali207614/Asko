@@ -360,12 +360,12 @@ const Resizable = ({
                                                             </p>
                                                         </div>
                                                         <div className='w-70 p-16' >
-                                                            <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                                            <p style={{ width: "190px" }} className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                                                 {get(item, 'ItemName', '') || '-'}
                                                             </p>
                                                         </div>
                                                         <div className='w-50 p-16' >
-                                                            <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
+                                                            <p style={{ width: "140px" }} className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                                                 {get(item, 'Name', '') || '-'}
                                                             </p>
                                                         </div>
@@ -375,12 +375,12 @@ const Resizable = ({
                                                             </p>
                                                         </div>
                                                         <div className='w-50 p-16' >
-                                                            <p className='table-body-text 50'>
+                                                            <p className='table-body-text '>
                                                                 {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), 'UZS')}
                                                             </p>
                                                         </div>
                                                         <div className='w-50 p-16' >
-                                                            <p className='table-body-text 50'>
+                                                            <p className='table-body-text '>
                                                                 {formatterCurrency(Number(get(item, 'PriceList.Price', 0)) * get(item, 'value'), 'UZS')}
                                                             </p>
                                                         </div>
