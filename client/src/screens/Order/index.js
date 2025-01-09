@@ -8,6 +8,7 @@ import filterImg from '../../assets/images/filter-search.svg';
 import arrowDown from '../../assets/images/arrow-down.svg';
 import pagination from '../../assets/images/pagination.svg';
 import tickSquare from '../../assets/images/tick-square.svg';
+import imageIcon from '../../assets/images/image.svg';
 import add from '../../assets/images/add.svg';
 import close from '../../assets/images/Close-filter.svg';
 import axios from 'axios';
@@ -15,7 +16,7 @@ import { get, isNumber } from 'lodash';
 import formatterCurrency from '../../helpers/currency';
 import { FadeLoader } from "react-spinners";
 import LazyLoad from "react-lazyload";
-import { ErrorModal, ConfirmModal, FilterModal, FilterModalResizable, WarningModal, BusinessPartner } from '../../components/Modal';
+import { ErrorModal, ConfirmModal, FilterModal, FilterModalResizable, WarningModal, BusinessPartner, ImageModal } from '../../components/Modal';
 import { Spinner } from '../../components';
 import { useSelector } from 'react-redux';
 import { FixedSizeList as List } from 'react-window';
@@ -115,10 +116,17 @@ const Order = () => {
 
   const filterRef = useRef();
   const businessPartner = useRef();
+  const imageRef = useRef();
 
 
   const BusinessPartnerModalRef = useCallback(ref => {
     businessPartner.current = ref;
+  }, []);
+
+
+
+  const ImageModalRef = useCallback(ref => {
+    imageRef.current = ref;
   }, []);
 
   const filterModalRef = useCallback(ref => {
@@ -262,7 +270,12 @@ const Order = () => {
         }
       )
       .then(({ data }) => {
-        setCustomerDataInvoice({ ...partner, Cars: data })
+        if (data.length == 1) {
+          setCustomerDataInvoice({ ...partner, Cars: data, selectCar: get(data, '[0].U_car_code'), selectCarName: get(data, '[0].U_car_name') })
+        }
+        else {
+          setCustomerDataInvoice({ ...partner, Cars: data, selectCar: '', selectCarName: '' })
+        }
       })
       .catch(err => {
         errorNotify("Mijozlarni yuklashda muommo yuzaga keldi")
@@ -576,6 +589,8 @@ const Order = () => {
         setTsSelect(10)
         setComment('')
         setLogist()
+        setCustomerDataInvoice({})
+
       })
       .catch(err => {
         if (get(err, 'response.status') == 401) {
@@ -758,10 +773,10 @@ const Order = () => {
                   </ul> : ''}
                 </div>
                 <div className='w-70'>
-                  <input disabled={get(docEntry, 'id')} value={get(date, 'DocDate', '')} onChange={(e) => setDate({ ...date, DocDate: e.target.value })} type="date" className='order-inp' placeholder='Doc Date' />
+                  <input disabled={true} value={get(date, 'DocDate', '')} onChange={(e) => setDate({ ...date, DocDate: e.target.value })} type="date" className='order-inp' placeholder='Doc Date' />
                 </div>
                 <div className='w-70'>
-                  <input disabled={get(docEntry, 'id')} value={get(date, 'DocDueDate', '')} onChange={(e) => setDate({ ...date, DocDueDate: e.target.value })} type="date" className='order-inp' placeholder='Due Date' />
+                  <input disabled={true} value={get(date, 'DocDueDate', '')} onChange={(e) => setDate({ ...date, DocDueDate: e.target.value })} type="date" className='order-inp' placeholder='Due Date' />
                 </div>
 
                 <div className='w-70'>
@@ -920,13 +935,14 @@ const Order = () => {
             <div className='table' >
               <div className='table-head'>
                 <ul className='table-head-list d-flex align  justify'>
-                  <li className='table-head-item w-50'>Код</li>
+                  <li className='table-head-item w-30'>Код</li>
                   <li className='table-head-item w-70'>Продукция</li>
                   <li className='table-head-item w-50'>Бранд</li>
-                  <li className='table-head-item w-50'>Мера</li>
+                  <li className='table-head-item w-30'>Мера</li>
                   <li className='table-head-item w-50'>Цена</li>
-                  <li className='table-head-item w-50'>Остаток</li>
-                  <li className='table-head-item w-70'>Количество</li>
+                  <li className='table-head-item w-30'>Остаток</li>
+                  <li className='table-head-item w-20'>Фото</li>
+                  <li className='table-head-item w-50'>Количество</li>
                   <li className='table-head-item w-47px'>
                     <button onClick={() => {
                       let filterData = mainData.filter(el => {
@@ -959,7 +975,7 @@ const Order = () => {
                             <LazyLoad height={65} once>
                               <li key={i} className={`table-body-item`}>
                                 <div className='table-item-head d-flex align  justify'>
-                                  <div className='w-50 p-16'>
+                                  <div className='w-30 p-16'>
                                     <p className='table-body-text' >
                                       {get(item, 'ItemCode', '')}
                                     </p>
@@ -974,7 +990,7 @@ const Order = () => {
                                       {get(item, 'Name', '') || '-'}
                                     </p>
                                   </div>
-                                  <div className='w-50 p-16' >
+                                  <div className='w-30 p-16' >
                                     <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                       {get(item, 'U_Article', '') || '-'}
                                     </p>
@@ -984,12 +1000,19 @@ const Order = () => {
                                       {formatterCurrency(Number(get(item, 'PriceList.Price', 0)), 'UZS')}
                                     </p>
                                   </div>
-                                  <div className='w-50 p-16' >
+                                  <div className='w-30 p-16' >
                                     <p className='table-body-text '>
                                       {Number(get(item, 'OnHand.OnHand', ''))} шт
                                     </p>
                                   </div>
-                                  <div className='w-70 p-16' >
+                                  <div className='w-20 p-16' >
+                                    <button style={{ cursor: 'pointer' }} onClick={() => {
+                                      imageRef.current?.open({ item });
+                                    }} className='btn-businesPartner'>
+                                      <img src={imageIcon} width={26} height={26} alt="" />
+                                    </button>
+                                  </div>
+                                  <div className='w-50 p-16' >
                                     <input
                                       ref={(el) => (inputRefs.current[i] = el)}
                                       onKeyDown={(event) => handleKeyDown(event, i)}
@@ -1063,6 +1086,7 @@ const Order = () => {
             filterData={filterData}
             customerDataInvoice={customerDataInvoice}
             groups={groups}
+            imageRef={imageRef}
 
           />
         </Layout>
@@ -1085,6 +1109,9 @@ const Order = () => {
           customerDataInvoice={customerDataInvoice}
           setCustomer={setCustomer}
           setCustomerCode={setCustomerCode}
+        />
+        <ImageModal
+          getRef={ImageModalRef}
         />
         <ErrorModal
           getRef={getErrorRef}

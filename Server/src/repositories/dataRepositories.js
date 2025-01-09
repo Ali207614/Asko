@@ -87,7 +87,9 @@ class DataRepositories {
                    T1."Price", 
                    T1."DiscPrcnt", 
                    T1."LineTotal",
-                   T3."ItmsGrpCod"
+                   T3."ItmsGrpCod",
+                   T3."UserText",
+                   T3."PicturName"
             FROM ${this.db}.OINV T0
             INNER JOIN ${this.db}.INV1 T1 ON T1."DocEntry" = T0."DocEntry"
             INNER JOIN ${this.db}.OCRD T2 ON T0."CardCode" = T2."CardCode"
@@ -132,7 +134,8 @@ class DataRepositories {
         `;
 
         return `
-            SELECT (${lengthQuery}) as length,  
+            SELECT (${lengthQuery}) as length, 
+                    T0."UserText", 
                    T0."U_brend",
                    T0."U_Article", 
                    T0."PicturName", 
@@ -251,7 +254,9 @@ class DataRepositories {
        T1."Price", 
        T1."DiscPrcnt", 
        T1."LineTotal",
-       T3."ItmsGrpCod"
+       T3."ItmsGrpCod",
+       T3."UserText",
+        T3."PicturName"
 FROM ${this.db}.OINV T0
 INNER JOIN ${this.db}.INV1 T1 ON T1."DocEntry" = T0."DocEntry"
 INNER JOIN ${this.db}.OCRD T2 ON T0."CardCode" = T2."CardCode"
@@ -263,6 +268,7 @@ INNER JOIN ${this.db}.OITM T3 ON T3."ItemCode" = T1."ItemCode"
 
     getInvoiceItems(items, U_branch) {
         let sql = ` SELECT  
+        T0."UserText",
 T0."U_brend",
 T0."U_Article", 
 T0."PicturName", 

@@ -13,6 +13,7 @@ import FilterModal from './FilterModal'
 import FilterModalResizable from './FilterModalResizable';
 import BusinessPartner from './BusinessPartner';
 import IncomingPayment from './IncomingPayment';
+import ImageModal from './ImageModal';
 export {
   IncomingPayment,
   BusinessPartner,
@@ -28,5 +29,6 @@ export {
   ConfirmModalOrder,
   FilterOrderModal,
   FilterModal,
-  FilterModalResizable
+  FilterModalResizable,
+  ImageModal
 };

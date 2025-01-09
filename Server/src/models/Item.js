@@ -6,6 +6,7 @@ const itemSchema = new mongoose.Schema({
     ItmsGrpCod: { type: String },
     U_brend: { type: String },
     Name: { type: String },
+    UserText: { type: String },
     U_Article: { type: String },
     OnHand: { type: [mongoose.Schema.Types.Mixed], default: [] },
     PriceList: { type: [mongoose.Schema.Types.Mixed], default: [] },

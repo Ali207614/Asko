@@ -17,6 +17,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.static('C:\\FOTO SAP'))
 
 connectDB()
 connectHana()

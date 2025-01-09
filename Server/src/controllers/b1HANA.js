@@ -100,8 +100,8 @@ class b1HANA {
                     const invoices = await Invoice.find(searchQuery)
                         .sort({
                             UUID: -1,       // UUID bo'lganlar yuqoriga
-                            DocEntry: -1,     // DocEntry bo'yicha katta-kichik tartib
-                            createdAt: -1     // Vaqt bo'yicha katta-kichik tartib
+                            createdAt: -1,    // Vaqt bo'yicha katta-kichik tartib
+                            DocEntry: -1   // DocEntry bo'yicha katta-kichik tartib
                         })
                         .skip(offset - 1)    // Paginatsiya: boshlanish nuqtasi
                         .limit(limit)        // Paginatsiya: natijalar soni
@@ -262,7 +262,6 @@ class b1HANA {
                 const totalDocuments = await Item.countDocuments({
                     "PriceList.ListName": get(req, 'user.U_branch', '')
                 });
-
                 if (totalDocuments) {
                     const search = (req.query.search || "").toString().trim();
                     const offset = parseInt(req.query.offset, 10) || 0;
@@ -417,7 +416,6 @@ class b1HANA {
 
             return res.status(200).json(data);
         } catch (error) {
-            console.log(error)
             next(error); // Xatolikni middleware orqali qaytarish
         }
     };
@@ -430,7 +428,6 @@ class b1HANA {
 
     getCars = async (req, res, next) => {
         try {
-            // `CardCode` ni `req.query` dan olish
             const cardCode = req.query.cardCode;
 
             if (!cardCode) {

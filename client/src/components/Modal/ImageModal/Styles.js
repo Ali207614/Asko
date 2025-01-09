@@ -4,6 +4,15 @@ const Style = styled.div`
 li{
   list-style: none;
 } 
+
+.close-filter{
+    border:none;
+    background-color: transparent;
+    outline: none;
+    text-align: right;
+    margin-bottom: 20px;
+    width: 100%;
+  }
 .overlay {
   position: fixed; /* Overlayni butun ekran bo'ylab ko'rsatish uchun */
   top: 0;
@@ -16,11 +25,11 @@ li{
   align-items: center;
   z-index: 1000; /* Overlay boshqa kontentdan ustun turishi uchun */
 }
-
 .btn-businesPartner{
   outline:none;
     border:none;
     background:  none;
+
 }
 .title-menu{
   color:  #000;
@@ -152,11 +161,7 @@ li{
   }
 
 
-  .right-head{
-    display:flex;
-    align-items:center;
-    justify-content: end;
-  }
+
   .right-inp{
     border-radius: 8px;
     background:  #F7F8F9;
@@ -363,6 +368,7 @@ li{
     display:none;
   }
   .table-head-item{
+    color:  #585858;
     font-size: 12px;
     font-style: normal;
     font-weight: 500;
@@ -546,7 +552,6 @@ li{
   padding: 10px 12px;
   border-radius: 12px;
 border: 1px solid  #E9E9E9;
-margin-left: 12px;
 }
 
 .footer-text{
@@ -561,12 +566,27 @@ line-height: normal;
 .w-70{
     width: 70%;
   }
-  
-.w-20{
-  width: 20%;
+  .footer-text{
+    color: #000;
+font-variant-numeric: lining-nums tabular-nums stacked-fractions;
+font-feature-settings: 'clig' off, 'liga' off;
+font-size: 13px;
+font-style: normal;
+font-weight: 500;
+line-height: normal;
 }
-.w-30{
-  width: 30%;
+
+.footer-block{
+  background-color: #fff;
+  padding: 10px 12px;
+  border-radius: 12px;
+border: 1px solid  #E9E9E9;
+}
+
+.right-head{
+  display: flex;
+    align-items: baseline;
+    flex-direction: column;
 }
 `;
 export default Style;

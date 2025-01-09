@@ -6,6 +6,7 @@ import pagination from '../../assets/images/pagination.svg';
 import remove from '../../assets/images/remove.svg';
 import allRemove from '../../assets/images/close.svg';
 import close from '../../assets/images/Close-filter.svg';
+import imageIcon from '../../assets/images/image.svg';
 
 import formatterCurrency from '../../helpers/currency';
 import 'react-resizable/css/styles.css';
@@ -39,7 +40,8 @@ const Resizable = ({
     setFilterPropertyResize,
     filterData,
     customerDataInvoice,
-    groups
+    groups,
+    imageRef
 }) => {
     const { getMe } = useSelector(state => state.main);
 
@@ -322,15 +324,15 @@ const Resizable = ({
                                 <div className='table tab-table'>
                                     <div className='table-head'>
                                         <ul className='table-head-list d-flex align justify'>
-                                            <li className='table-head-item w-50'>Код</li>
+                                            <li className='table-head-item w-30'>Код</li>
                                             <li className='table-head-item w-70'>Продукция</li>
                                             <li className='table-head-item w-50'>Бранд</li>
-                                            <li className='table-head-item w-50'>Мера</li>
+                                            <li className='table-head-item w-30'>Мера</li>
                                             <li className='table-head-item w-50'>Цена</li>
                                             <li className='table-head-item w-50'>Общая сумма</li>
-                                            <li className='table-head-item w-50'>Остаток</li>
-                                            <li className='table-head-item w-70'>Количество</li>
-                                            {/* <li className='table-head-item w-70'>Скидка</li> */}
+                                            <li className='table-head-item w-30'>Остаток</li>
+                                            <li className='table-head-item w-20'>Фото</li>
+                                            <li className='table-head-item w-50'>Количество</li>
                                             <li className='table-head-item w-47px'>
                                                 <button onClick={() => {
                                                     setMainData([...actualData.map(item => {
@@ -354,7 +356,7 @@ const Resizable = ({
                                             {paginateState(state, pageSelect - 1, tsSelect).map((item, i) => (
                                                 <li key={i} className='table-body-item'>
                                                     <div className='table-item-head d-flex align justify'>
-                                                        <div className='w-50 p-16'>
+                                                        <div className='w-30 p-16'>
                                                             <p className='table-body-text' >
                                                                 {get(item, 'ItemCode', '')}
                                                             </p>
@@ -369,7 +371,7 @@ const Resizable = ({
                                                                 {get(item, 'Name', '') || '-'}
                                                             </p>
                                                         </div>
-                                                        <div className='w-50 p-16' >
+                                                        <div className='w-30 p-16' >
                                                             <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                                                 {get(item, 'U_Article', '') || '-'}
                                                             </p>
@@ -384,12 +386,19 @@ const Resizable = ({
                                                                 {formatterCurrency(Number(get(item, 'PriceList.Price', 0)) * get(item, 'value'), 'UZS')}
                                                             </p>
                                                         </div>
-                                                        <div className='w-50 p-16' >
+                                                        <div className='w-30 p-16' >
                                                             <p className='table-body-text '>
                                                                 {Number(get(item, 'OnHand.OnHand', ''))} шт
                                                             </p>
                                                         </div>
-                                                        <div className='w-70 p-16'>
+                                                        <div className='w-20 p-16' >
+                                                            <button style={{ cursor: 'pointer' }} onClick={() => {
+                                                                imageRef.current?.open({ item });
+                                                            }} className='btn-businesPartner'>
+                                                                <img src={imageIcon} width={26} height={26} alt="" />
+                                                            </button>
+                                                        </div>
+                                                        <div className='w-50 p-16'>
                                                             <p className='table-body-text'>
                                                                 <input
                                                                     ref={(el) => (inputRefs.current[i] = el)}

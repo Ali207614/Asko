@@ -27,6 +27,7 @@ const customStyles = {
     transform: 'translate(-50%, -50%)',
     border: 'none',
     width: "900px",
+    height: "700px",
     padding: `30px 15px`,
     overflow: 'none',
     borderRadius: 0
@@ -284,7 +285,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
                 const rawValue = e.target.value.replace(/\s/g, '').replace(/[^0-9]/g, ''); // Faqat raqamlar
                 setValue(rawValue || 0); // Asosiy qiymatni saqlash
               }}
-              placeholder="Введите число"
+              placeholder="Введите сумму"
             />
 
 
@@ -304,7 +305,7 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
               <li className='table-head-item w-70'>Количество</li>
             </ul>
           </div>
-          <div className='table-body'>
+          <div className='table-body' style={{ overflow: 'auto', height: '253px' }}>
             <ul className='table-body-list'>
               {get(clone, 'Items', []).map((item, i) => (
                 <li key={i} className='table-body-item'>

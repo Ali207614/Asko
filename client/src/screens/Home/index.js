@@ -455,7 +455,7 @@ const Home = () => {
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text w-70'>
-                                                                        {moment(get(item, 'DocDate', '')).format("DD-MM-YYYY")}
+                                                                        {moment(get(item, 'DocDate', '')).format("DD.MM.YYYY")}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
