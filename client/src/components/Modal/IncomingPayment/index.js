@@ -91,9 +91,15 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
           setChecked(true);
           await setClone({ ...clone, U_flayer2: true, U_flayer: "Да" })
         }
+        else {
+          setChecked(false);
+        }
         if (get(item, 'U_vulkanizatsiya') == 'Да') {
           setChecked2(true);
           await setClone({ ...clone, U_vulkanizatsiya2: true, U_vulkanizatsiya: 'Да' })
+        }
+        else {
+          setChecked2(false);
         }
         if (get(item, 'DocEntry')) {
           let merchants = await getMerchant()
@@ -147,6 +153,11 @@ const IncomingPayment = ({ getRef, getOrders, limit, search, filterProperty }) =
       }
       if ((Number(get(clone, 'PaidSys', 0) || 0) + Number(value) + (sum || 0)) > Number(get(clone, 'DocTotalSy', 0))) {
         warningNotify("Summada xatolik")
+        return
+      }
+
+      if (!get(clone, 'U_car')) {
+        warningNotify("Mashina tanlanmagan")
         return
       }
       setUpdateLoading(true)

@@ -36,7 +36,7 @@ const Header = () => {
                       Продажа
                     </NavLink>
                   </li>
-                  {/* <li className='list-item'>
+                  <li className='list-item'>
                     <NavLink
                       to="/outgoing"
                       className={() => {
@@ -46,7 +46,7 @@ const Header = () => {
                     >
                       Исходящий платеж
                     </NavLink>
-                  </li> */}
+                  </li>
                 </ul>
               </nav>
             </div>

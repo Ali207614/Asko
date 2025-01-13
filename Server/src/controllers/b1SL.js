@@ -5,7 +5,7 @@ let dbService = require('../services/dbService')
 
 const moment = require('moment');
 const { getSession, saveSession } = require("../helpers");
-const { api_params } = require("../config");
+const { api_params, api } = require("../config");
 const b1HANA = require("./b1HANA");
 const BusinessPartner = require("../models/BusinessPartner");
 const Invoice = require("../models/Invoice");
@@ -17,7 +17,7 @@ const sleepNow = (delay) =>
 
 class b1SL {
     constructor() {
-        this.api = process.env.api;
+        this.api = api;
     }
     auth = async () => {
         let obj = api_params
@@ -379,6 +379,8 @@ class b1SL {
             "CashSum": get(body, 'value'),
             "CashSumFC": get(body, 'value'),
             "CashSumSys": get(body, 'value'),
+            "U_branch": get(body, 'U_branch'),
+            "U_tolovturi": `${get(body, 'U_merchantturi', '')} - ${get(body, 'U_merchantfoizi', '')} %`,
             "PaymentInvoices": [
                 {
                     "AppliedFC": get(body, 'value'),

@@ -290,10 +290,58 @@ class b1HANA {
 
 
                     // Hujjatlarni olish
-                    const documents = await Item.find(searchQuery)
-                        .skip(offset - 1)
-                        .limit(limit)
-                        .lean();
+                    // const documents = await Item.find(searchQuery)
+                    //     .skip(offset - 1)
+                    //     .limit(limit)
+                    //     .lean();
+
+                    const documents = await Item.aggregate([
+                        // Foydalanuvchi uchun filterni qo'llash
+                        { $match: searchQuery },
+
+                        // OnHand massivini filtrlash
+                        {
+                            $addFields: {
+                                OnHand: {
+                                    $filter: {
+                                        input: "$OnHand",
+                                        as: "onHand",
+                                        cond: { $eq: ["$$onHand.ListName", get(req, 'user.U_branch', '')] },
+                                    },
+                                },
+                            },
+                        },
+
+                        // Faqat kerakli ma'lumotlarni qoldirish
+                        { $match: { "OnHand.0": { $exists: true } } },
+
+                        // OnHand massiviga yangi maydon (OnHandDouble) qo'shish
+                        {
+                            $addFields: {
+                                OnHand: {
+                                    $map: {
+                                        input: "$OnHand",
+                                        as: "onHand",
+                                        in: {
+                                            $mergeObjects: [
+                                                "$$onHand",
+                                                { OnHandDouble: { $toDouble: "$$onHand.OnHand" } },
+                                            ],
+                                        },
+                                    },
+                                },
+                            },
+                        },
+
+                        // Hujjatlarni OnHand[0].OnHandDouble bo'yicha tartiblash
+                        {
+                            $sort: { "OnHand.0.OnHandDouble": -1 },
+                        },
+
+                        // Paginationni qo'llash
+                        { $skip: offset - 1 },
+                        { $limit: limit },
+                    ]);
 
                     // Umumiy hujjat sonini hisoblash
                     const totalDocuments = await Item.countDocuments(searchQuery);
@@ -334,7 +382,12 @@ class b1HANA {
                 ...newItems.filter(item => item?.updateOne?.document).map(item => item.updateOne.document)
             ]
             if (get(req, 'query.status', '') == 'false') {
-                newItems = newItems.map(item => item?.toObject());
+                newItems = newItems.map(item => {
+                    if (typeof item.toObject === 'function') {
+                        return item.toObject();
+                    }
+                    return item;
+                });
             }
             const drafts = await Invoice.find({
                 U_branch: get(req, 'user.U_branch', ''),

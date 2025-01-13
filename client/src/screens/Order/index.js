@@ -278,6 +278,10 @@ const Order = () => {
         }
       })
       .catch(err => {
+        if (get(err, 'response.status') == 401) {
+          navigate('/login')
+          return
+        }
         errorNotify("Mijozlarni yuklashda muommo yuzaga keldi")
       });
 
@@ -304,8 +308,12 @@ const Order = () => {
         return data
       })
       .catch(err => {
-        setLoading(false)
         errorNotify("Buyurtmani yuklashda muommo yuzaga keldi")
+        setLoading(false)
+        if (get(err, 'response.status') == 401) {
+          navigate('/login')
+          return
+        }
       });
 
     return;
@@ -412,6 +420,10 @@ const Order = () => {
         }
       })
       .catch(err => {
+        if (get(err, 'response.status') == 401) {
+          navigate('/login')
+          return
+        }
         setLoading(false)
         errorNotify("Tovarlarni yuklashda muommo yuzaga keldi")
       });
@@ -433,7 +445,11 @@ const Order = () => {
         setGroups(data)
       })
       .catch(err => {
-        errorNotify("Tovarlarni yuklashda muommo yuzaga keldi")
+        if (get(err, 'response.status') == 401) {
+          navigate('/login')
+          return
+        }
+        errorNotify("Gruppalarni yuklashda muommo yuzaga keldi")
       });
 
     return;
