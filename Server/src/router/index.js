@@ -29,12 +29,14 @@ router.get('/api/cars', authMiddleware, b1HANA.getCars);
 
 router.get('/api/getCurrency', authMiddleware, b1HANA.getLastCurrency);
 
+router.get('/api/getAcct', authMiddleware, b1HANA.getAcct);
 router.get('/api/getMerchant', authMiddleware, b1HANA.getMerchant);
 router.get('/api/getUFD', authMiddleware, b1HANA.getUserDefinedField);
 router.get('/api/getDisCount', authMiddleware, b1HANA.getDisCount);
 router.get('/api/getDiscountGroups', authMiddleware, b1HANA.getDiscountGroups);
 
 router.get('/api/getOutgoingPayment', authMiddleware, b1HANA.getOutgoingPayment);
+router.post('/api/paymentDrafts', authMiddleware, b1SL.paymentDrafts);
 
 
 

@@ -420,6 +420,37 @@ class b1SL {
                 }
             });
     }
+    paymentDrafts = async (req, res, next) => {
+        let schema = { ...req.body, U_branch: get(req, 'user.U_branch', '') }
+
+        const axios = Axios.create({
+            baseURL: `${this.api}`,
+            timeout: 30000,
+            headers: {
+                'Cookie': get(getSession(), 'Cookie[0]', '') + get(getSession(), 'Cookie[1]', ''),
+                'SessionId': get(getSession(), 'SessionId', '')
+            },
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+        });
+        return axios
+            .post(`/PaymentDrafts`, schema)
+            .then(async ({ data }) => {
+                return res.status(201).json()
+            })
+            .catch(async (err) => {
+                if (get(err, 'response.status') == 401) {
+                    let token = await this.auth()
+                    if (token.status) {
+                        return await this.paymentDrafts(req, res, next)
+                    }
+                    return res.status(get(err, 'response.status', 400) || 400).json({ message: get(err, 'response.data.error.message.value') })
+                } else {
+                    return res.status(get(err, 'response.status', 400) || 400).json({ message: get(err, 'response.data.error.message.value') })
+                }
+            });
+    }
 
 
 }

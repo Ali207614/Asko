@@ -307,41 +307,10 @@ ORDER BY T0."ItemName"`
     }
 
     outGoing(U_branch = '', { offset, limit, search }) {
+        let len = `SELECT sum(1) FROM ${this.db}."OPDF"  T0 WHERE T0."U_branch" = '${U_branch}'`
         return `
-        WITH FilteredData AS (
-            SELECT 
-                T1."AcctName", 
-                T0."DocNum", 
-                T0."DocType", 
-                T0."Canceled", 
-                T0."DocDate" AS "DocumentDate",
-                T0."DocDueDate", 
-                T0."CardCode", 
-                T0."DocTotal", 
-                T0."DocTotalFC", 
-                T0."CardName",
-                T2."Status" AS "ApprovalStatus", 
-                CASE T2."Status"
-                    WHEN 'W' THEN 'Waiting for Approval'
-                    WHEN 'Y' THEN 'Approved'
-                    WHEN 'N' THEN 'Rejected'
-                    ELSE 'No Approval Process'
-                END AS "ApprovalStatusDescription"
-            FROM ${this.db}.OVPM T0
-            INNER JOIN ${this.db}.OACT T1 ON T0."CardCode" = T1."AcctCode"
-            LEFT JOIN ${this.db}.OWDD T2 ON T0."DocEntry" = T2."DocEntry" 
-            WHERE 
-                T0."Canceled" = 'N' 
-                AND T0."DocType" = 'A' 
-                AND T0."U_branch" = '${U_branch}'
-                AND T2."ObjType" = 46
-                ${search ? `AND (T1."AcctName" LIKE '%${search}%' OR T0."CardName" LIKE '%${search}%')` : ''}
-        )
-        SELECT 
-            *,
-            (SELECT COUNT(*) FROM FilteredData) AS "LENGTH"
-        FROM FilteredData
-        ORDER BY "DocumentDate" DESC 
+        SELECT 'W' as "ApprovalStatus", (${len}) as length, T1."AcctName",T0."DocNum", T0."DocType", T0."Canceled", T0."DocDate", T0."DocDueDate", T0."CardCode", T0."CashSum", T0."CashSumFC", T0."DocCurr", T0."DocRate", T0."DocTotal", T0."DocTotalFC" FROM ${this.db}."OPDF" T0 
+        INNER JOIN ${this.db}.OACT T1 ON T0."CardCode" = T1."AcctCode" WHERE T0."DocType" ='A' and  T0."Canceled" ='N' and T0."U_branch" = '${U_branch}'
         LIMIT ${limit}
         OFFSET ${offset - 1};
         `;
@@ -351,6 +320,13 @@ ORDER BY T0."ItemName"`
     getAcctSearch(value = '') {
         return `
             Select * from ${this.db}.OACT
+        `;
+    }
+
+
+    getAllAcct() {
+        return `
+        SELECT T0."AcctCode", T0."AcctName", T0."CurrTotal", T0."Levels" FROM ${this.db}.OACT T0  WHERE T0."Levels" = 5
         `;
     }
 

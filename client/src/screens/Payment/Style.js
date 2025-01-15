@@ -21,6 +21,8 @@ li{
 }
 
 
+
+
 .overlay {
   position: fixed; /* Overlayni butun ekran bo'ylab ko'rsatish uchun */
   top: 0;
@@ -446,6 +448,9 @@ li{
   .w-47px{
     width:47px;
   }
+  .w-20{
+    width:20%;
+  }
 
 
   .select-items {
@@ -517,7 +522,7 @@ li{
     border-radius: 4px;
     max-height:400px ;
     position: absolute;
-    max-width: 96%;
+    width: 550px;
     top: 41px;
     border-radius: 4px;
   }

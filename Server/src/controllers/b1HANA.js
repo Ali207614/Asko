@@ -17,6 +17,7 @@ const Merchant = require("../models/Merchant");
 const UserDefinedField = require("../models/UserDefinedField");
 const DisCount = require("../models/DisCount");
 const DiscountGroup = require("../models/DisCountGroup");
+const Accounts = require("../models/Accounts");
 require('dotenv').config();
 
 
@@ -663,6 +664,29 @@ class b1HANA {
         return res.status(200).json(data)
     }
 
+    getAcct = async (req, res, next) => {
+        const search = req.query.search || ""
+        let count = await Accounts.estimatedDocumentCount()
+        if (count > 0) {
+            let searchQuery = {}
+            if (search.trim().length) {
+                searchQuery.$or = [
+                    { AcctCode: { $regex: search, $options: "i" } },
+                    { AcctName: { $regex: search, $options: "i" } },
+                ];
+            }
+            let accounts = await Accounts.find(searchQuery)
+            return res.status(200).json(accounts)
+        }
+        let query = await DataRepositories.getAllAcct()
+        let data = await this.execute(query);
+        await Accounts.create(data)
+        if (search.trim().length) {
+            data = data.filter(item => item.AcctCode.includes(search) || item.AcctName.includes(search))
+        }
+        return res.status(200).json(data)
+    }
+
     deleteInvoice = async (req, res, next) => {
         try {
             const uuid = req.params.id; // URL dan ID ni olish
@@ -718,6 +742,7 @@ class b1HANA {
             let { offset, limit, status, search } = req.query
             const branch = req.user.U_branch;
             let query = await DataRepositories.outGoing(branch, req.query);
+            console.log(query)
             const data = await this.execute(query);
             return res.status(200).json(data)
         }

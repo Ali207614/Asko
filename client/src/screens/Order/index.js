@@ -606,7 +606,7 @@ const Order = () => {
         setComment('')
         setLogist()
         setCustomerDataInvoice({})
-
+        getMerchant()
       })
       .catch(err => {
         if (get(err, 'response.status') == 401) {
@@ -667,6 +667,8 @@ const Order = () => {
       .then(({ data }) => {
         setOrderLoading(false)
         successNotify("Ma'lumot muvaffaqiyatli o'zgartirildi")
+        getMerchant()
+
       })
       .catch(err => {
         if (get(err, 'response.status') == 401) {

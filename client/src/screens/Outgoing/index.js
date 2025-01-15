@@ -347,6 +347,7 @@ const Outgoing = () => {
                                         <ul className='table-body-list'>
                                             {
                                                 mainData.map((item, i) => {
+                                                    console.log(get(item, 'ApprovalStatus', '1'))
                                                     return (
                                                         <li key={i} className={`table-body-item ${activeData === (i + 1) ? 'active-table' : ''}`}>
                                                             <div className='table-item-head d-flex align  justify'>
@@ -364,7 +365,7 @@ const Outgoing = () => {
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
-                                                                        {moment(get(item, 'DocumentDate', '')).format("DD-MM-YYYY")}
+                                                                        {moment(get(item, 'DocDate', '')).format("DD-MM-YYYY")}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
@@ -374,7 +375,7 @@ const Outgoing = () => {
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <button style={{ color: statuses[get(item, 'ApprovalStatus', '1')]?.color || '#000', backgroundColor: statuses[get(item, 'ApprovalStatus', '1')]?.backgroundColor || '#E0E0E0' }} className='table-body-text status-button'>
-                                                                        {statuses[get(item, 'ApprovalStatus', '1')]?.name || 'Без процесса утверждения'}
+                                                                        {statuses[get(item, 'ApprovalStatus', '1').toString()]?.name || 'Без процесса утверждения'}
                                                                     </button>
                                                                 </div>
 
