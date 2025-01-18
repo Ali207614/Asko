@@ -52,6 +52,7 @@ const Outgoing = () => {
     const [filterProperty, setFilterProperty] = useState(get(getFilter, 'filterProperty', {}))
 
     const [updateLoading, setUpdateLoading] = useState(false)
+    const [deleteDraft, setDeleteDraft] = useState(false)
 
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [invoiceDropDown, setInvoiceDropDown] = useState(false);
@@ -180,12 +181,12 @@ const Outgoing = () => {
         filterRef.current?.open(filterProperty, setFilterProperty);
     }
 
-
-    async function deleteInvoice(uuid) {
-        setUpdateLoading(true)
+    // 
+    async function paymentDrafts(uuid) {
+        setDeleteDraft(true)
         axios
             .delete(
-                url + `/api/invoices/${uuid}`,
+                url + `/api/paymentDrafts/${uuid}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${get(getMe, 'token')}`,
@@ -193,19 +194,19 @@ const Outgoing = () => {
                 }
             )
             .then(({ data }) => {
-                setUpdateLoading(false)
-                getOrders({ page: 1, limit, filterProperty, value: search })
-                setTs(limit)
-                setPage(1);
+                setDeleteDraft(false)
+                // getOrders({ page: 1, limit, filterProperty, value: search })
+                getOrders({ page: 1, limit, value: search, filterProperty })
+
+                // setTs(limit)
+                // setPage(1);
             })
             .catch(err => {
-                setUpdateLoading(false)
-
+                setDeleteDraft(false)
                 if (get(err, 'response.status') == 401) {
                     navigate('/login')
                     return
                 }
-
                 errorNotify(get(err, 'response.data.message', `Ma'lumot O'chirishda xatolik yuz berdi`) || `Ma'lumot O'chirishda xatolik yuz berdi`)
             });
 
@@ -331,13 +332,14 @@ const Outgoing = () => {
                         <div className='table'>
                             <div className='table-head'>
                                 <ul className='table-head-list d-flex align  justify'>
-                                    {/* <li className='table-head-item'>DocNum</li> */}
-                                    <li className='table-head-item  d-flex align '>
+                                    <li className='table-head- w-20'>ID</li>
+                                    <li className='table-head-item  d-flex align w-100'>
                                         Название счета
                                     </li>
                                     <li className='table-head-item w-70'>Код счета</li>
                                     <li className='table-head-item w-70'>Дата регистрации</li>
                                     <li className='table-head-item w-70'>Всего</li>
+                                    <li className='table-head-item w-100'>Комментарий</li>
                                     <li className='table-head-item w-70'>Статус оплаты</li>
                                 </ul>
                             </div>
@@ -347,20 +349,23 @@ const Outgoing = () => {
                                         <ul className='table-body-list'>
                                             {
                                                 mainData.map((item, i) => {
-                                                    console.log(get(item, 'ApprovalStatus', '1'))
                                                     return (
                                                         <li key={i} className={`table-body-item ${activeData === (i + 1) ? 'active-table' : ''}`}>
                                                             <div className='table-item-head d-flex align  justify'>
-                                                                <div className='d-flex align  w-100 p-16'>
-                                                                    <p className='table-body-text truncated-text ' style={{ width: '200px' }} title={get(item, 'AcctName', '')} onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                        {get(item, 'AcctName', '')}
+                                                                <div className='d-flex align  w-20 p-16'>
+                                                                    <p className='table-body-text truncated-text w-100' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
+                                                                        {get(item, 'DocNum', '')}
                                                                     </p>
                                                                 </div>
 
-
+                                                                <div className='d-flex align  w-100 p-16'>
+                                                                    <p className='table-body-text truncated-text ' style={{ width: '240px' }} title={get(item, 'AcctName', '')} onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
+                                                                        {get(item, 'AcctName', '')}
+                                                                    </p>
+                                                                </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
-                                                                    <p className='table-body-text '>
-                                                                        {get(item, 'CardCode', '-') || '-'}
+                                                                    <p className='table-body-text'>
+                                                                        {get(item, 'AcctCode', '-') || '-'}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
@@ -370,7 +375,12 @@ const Outgoing = () => {
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
                                                                     <p className='table-body-text '>
-                                                                        {formatterCurrency(Number(get(item, 'DocTotalFC', 0)), 'UZS')}
+                                                                        {formatterCurrency(Number(get(item, 'AppliedFC', 0)), 'UZS')}
+                                                                    </p>
+                                                                </div>
+                                                                <div className='w-100 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
+                                                                    <p className='table-body-text w-100'>
+                                                                        {get(item, 'Comments', '') || '-'}
                                                                     </p>
                                                                 </div>
                                                                 <div className='w-70 p-16' onClick={() => setActiveData(activeData === i + 1 ? 0 : (i + 1))}>
@@ -382,29 +392,16 @@ const Outgoing = () => {
                                                             </div>
                                                             <div className='table-item-foot d-flex align'>
                                                                 <button className='table-item-btn d-flex align'>
-                                                                    {
-                                                                        get(item, 'sap') ? (
-                                                                            <Link className='table-item-text d-flex align' to={`/invoice/${get(item, 'DocEntry')}`}>
-                                                                                Просмотреть <img src={editIcon} alt="arrow right" />
-                                                                            </Link>
-                                                                        ) : (
-                                                                            <Link className='table-item-text d-flex align' to={`/invoice/${get(item, 'UUID')}`}>
-                                                                                Просмотреть и изменить заказ <img src={editIcon} alt="arrow right" />
-                                                                            </Link>
-                                                                        )
-                                                                    }
-                                                                </button>
-                                                                {get(getMe, 'data.U_role') == 'Cashier' && <button onClick={() => {
-                                                                    incomingRef.current?.open(item, disCount);
-                                                                }} className='table-item-btn d-flex align'>
-                                                                    Оплата <img src={editIcon} alt="arrow right" />
-                                                                </button>}
+                                                                    <Link className='table-item-text d-flex align' to={`/payment/${get(item, 'DocEntry')}/${get(item, 'ApprovalStatus') == 'Y' ? 'payment' : "draft"}`}>
+                                                                        Просмотреть <img src={editIcon} alt="arrow right" />
+                                                                    </Link>
 
+                                                                </button>
                                                                 {
-                                                                    get(item, 'UUID') ?
+                                                                    get(item, 'ApprovalStatus') == 'W' ?
                                                                         <div className="dropdown-container">
-                                                                            <button style={{ width: '93px' }} disabled={updateLoading} className="table-item-btn d-flex align table-item-text position-relative" onClick={() => deleteInvoice(item.UUID)}>
-                                                                                Удалить  {updateLoading ?
+                                                                            <button style={{ width: '93px' }} disabled={deleteDraft} className="table-item-btn d-flex align table-item-text position-relative" onClick={() => paymentDrafts(item.DocEntry)}>
+                                                                                Удалить  {deleteDraft ?
                                                                                     <div className="spinner-border" role="status">
                                                                                         <span className="sr-only">Loading...</span>
                                                                                     </div>

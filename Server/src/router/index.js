@@ -37,6 +37,8 @@ router.get('/api/getDiscountGroups', authMiddleware, b1HANA.getDiscountGroups);
 
 router.get('/api/getOutgoingPayment', authMiddleware, b1HANA.getOutgoingPayment);
 router.post('/api/paymentDrafts', authMiddleware, b1SL.paymentDrafts);
+router.delete('/api/paymentDrafts/:id', authMiddleware, b1SL.deletePaymentDrafts);
+router.get('/api/getOutgoingPayment/:id/:draft', authMiddleware, b1HANA.getOutgoingPaymentById);
 
 
 

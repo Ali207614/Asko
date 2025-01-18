@@ -13,6 +13,7 @@ function App() {
         <Route path="/invoice/:id" element={<Order />} />
         <Route path="/outgoing" element={<Outgoing />} />
         <Route path="/payment" element={<Payment />} />
+        <Route path="/payment/:id/:draft" element={<Payment />} />
 
       </Routes>
     </BrowserRouter>

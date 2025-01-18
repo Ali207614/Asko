@@ -307,13 +307,149 @@ ORDER BY T0."ItemName"`
     }
 
     outGoing(U_branch = '', { offset, limit, search }) {
-        let len = `SELECT sum(1) FROM ${this.db}."OPDF"  T0 WHERE T0."U_branch" = '${U_branch}'`
-        return `
-        SELECT 'W' as "ApprovalStatus", (${len}) as length, T1."AcctName",T0."DocNum", T0."DocType", T0."Canceled", T0."DocDate", T0."DocDueDate", T0."CardCode", T0."CashSum", T0."CashSumFC", T0."DocCurr", T0."DocRate", T0."DocTotal", T0."DocTotalFC" FROM ${this.db}."OPDF" T0 
-        INNER JOIN ${this.db}.OACT T1 ON T0."CardCode" = T1."AcctCode" WHERE T0."DocType" ='A' and  T0."Canceled" ='N' and T0."U_branch" = '${U_branch}'
-        LIMIT ${limit}
-        OFFSET ${offset - 1};
-        `;
+
+        let len = `SELECT COUNT(*) FROM (
+            SELECT 'W' AS "ApprovalStatus"
+            FROM ${this.db}."OPDF" T0
+            INNER JOIN ${this.db}."PDF4" T1 on T1."DocNum" = T0."DocEntry" 
+            WHERE T0."DocType" = 'A' 
+              AND T0."U_branch" = '${U_branch}'
+              AND NOT EXISTS (
+                  SELECT 1 FROM ${this.db}."OVPM" VP 
+                  WHERE VP."DraftKey" = T0."DocEntry"
+              )
+        
+            UNION ALL
+        
+            SELECT 'Y' AS "ApprovalStatus"
+            FROM ${this.db}."OVPM" T0 
+            INNER JOIN ${this.db}."VPM4" T1 on T1."DocNum" = T0."DocEntry" 
+            WHERE T0."DocType" = 'A' 
+              AND T0."Canceled" = 'N' 
+              AND T0."U_branch" = '${U_branch}'
+        ) AS subquery`;
+
+        return `SELECT * , (${len}) AS "LENGTH" FROM (
+            SELECT 
+            T0."Comments",
+    CASE 
+        WHEN T0."Canceled" = 'Y' 
+            THEN 'N' -- Payment Draft reject qilingan
+        ELSE 'W' -- Kutish holatida
+    END AS "ApprovalStatus",
+    T0."DocEntry",
+    T1."AcctCode",
+    T1."AcctName",
+    T0."DocNum", 
+    T0."DocType", 
+    T0."Canceled", 
+    T0."DocDate", 
+    T0."DocDueDate", 
+    T0."CardCode", 
+    T0."CashSum", 
+    T0."CashSumFC", 
+    T0."DocCurr", 
+    T0."DocRate", 
+    T0."DocTotal", 
+    T0."DocTotalFC",
+    T1."AppliedFC"
+FROM ${this.db}."OPDF" T0
+INNER JOIN ${this.db}."PDF4" T1 on T1."DocNum" = T0."DocEntry" 
+WHERE T0."DocType" = 'A' 
+  AND T0."U_branch" = '${U_branch}'
+  AND NOT EXISTS (
+      SELECT 1 FROM ${this.db}."OVPM" VP 
+      WHERE VP."DraftKey" = T0."DocEntry"
+  )
+            UNION ALL
+            SELECT 
+            T0."Comments",
+                'Y' AS "ApprovalStatus", 
+                T0."DocEntry",
+                T1."AcctCode",
+                T1."AcctName",
+                T0."DocNum", 
+                T0."DocType", 
+                T0."Canceled", 
+                T0."DocDate", 
+                T0."DocDueDate", 
+                T0."CardCode", 
+                T0."CashSum", 
+                T0."CashSumFC", 
+                T0."DocCurr", 
+                T0."DocRate", 
+                T0."DocTotal", 
+                T0."DocTotalFC",
+                T1."AppliedFC"
+            FROM ${this.db}."OVPM" T0 
+            INNER JOIN ${this.db}."VPM4" T1 on T1."DocNum" = T0."DocEntry" 
+            WHERE T0."DocType" = 'A' 
+              AND T0."Canceled" = 'N' 
+              AND T0."U_branch" = '${U_branch}'
+        ) AS subquery
+        ORDER by "DocNum" DESC
+        LIMIT ${limit} OFFSET ${offset - 1}`;
+
+    }
+    outGoingByDocEntry(id, draft) {
+        let sql = ''
+        if (draft == 'draft') {
+            sql = `
+            SELECT 
+            T0."Comments",
+            T0."DocEntry",
+            T1."AcctCode",
+            T1."AcctName",
+            T0."DocNum", 
+            T0."DocType", 
+            T0."Canceled", 
+            T0."DocDate", 
+            T0."DocDueDate", 
+            T0."CardCode", 
+            T0."CashSum", 
+            T0."CashSumFC", 
+            T0."DocCurr", 
+            T0."DocRate", 
+            T0."DocTotal", 
+            T0."DocTotalFC",
+            T1."AppliedFC"
+        FROM ${this.db}."OPDF" T0
+        INNER JOIN ${this.db}."PDF4" T1 on T1."DocNum" = T0."DocEntry" 
+        WHERE T0."DocType" = 'A' 
+          AND T0."DocEntry" = ${id}
+          AND NOT EXISTS (
+              SELECT 1 FROM ${this.db}."OVPM" VP 
+              WHERE VP."DraftKey" = T0."DocEntry"
+          )
+            `
+        }
+        else {
+            sql = `SELECT 
+            T0."Comments",
+            T0."DocEntry",
+            T1."AcctCode",
+            T1."AcctName",
+            T0."DocNum", 
+            T0."DocType", 
+            T0."Canceled", 
+            T0."DocDate", 
+            T0."DocDueDate", 
+            T0."CardCode", 
+            T0."CashSum", 
+            T0."CashSumFC", 
+            T0."DocCurr", 
+            T0."DocRate", 
+            T0."DocTotal", 
+            T0."DocTotalFC",
+            T1."AppliedFC"
+        FROM ${this.db}."OVPM" T0 
+        INNER JOIN ${this.db}."VPM4" T1 on T1."DocNum" = T0."DocEntry" 
+        WHERE T0."DocType" = 'A' 
+          AND T0."Canceled" = 'N' 
+          AND T0."DocEntry" = ${id}
+   `
+        }
+        return sql
     }
 
 
@@ -326,7 +462,7 @@ ORDER BY T0."ItemName"`
 
     getAllAcct() {
         return `
-        SELECT T0."AcctCode", T0."AcctName", T0."CurrTotal", T0."Levels" FROM ${this.db}.OACT T0  WHERE T0."Levels" = 5
+        SELECT T0."AcctCode", T0."AcctName", T0."CurrTotal", T0."Levels" FROM ${this.db}.OACT T0  WHERE T0."AcctCode" like '94%'
         `;
     }
 

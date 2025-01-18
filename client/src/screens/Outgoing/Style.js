@@ -402,6 +402,10 @@ margin-left: 12px;
 .w-50{
   width: 50%;
 }
+
+.w-20{
+  width: 20%;
+}
 .w-70{
   width: 70%;
 }

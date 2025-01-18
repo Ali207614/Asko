@@ -20,7 +20,7 @@ let url = process.env.REACT_APP_API_URL
 const Order = () => {
     const { getMe } = useSelector(state => state.main);
 
-    let { id } = useParams();
+    let { id, draft } = useParams();
     let location = useLocation();
     const navigate = useNavigate();
 
@@ -37,11 +37,41 @@ const Order = () => {
     const isDisabled = mainData.filter(item => (item?.value || '').trim().length && item?.AcctCode && item?.AcctName).length
 
     useEffect(() => {
-        setMainData('a'.repeat(20).split('').map((el, i) => ({ ...el, i })))
+        if (id) {
+            getOutgoingPayment(id, draft)
+        }
+        else {
+            setMainData('a'.repeat(1).split('').map((el, i) => ({ ...el, i })))
+        }
     }, [])
 
 
+    const getOutgoingPayment = (id, draft) => {
+        axios
+            .get(
+                url + `/api/getOutgoingPayment/${id}/${draft}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${get(getMe, 'token')}`,
+                    }
+                }
+            )
+            .then(({ data }) => {
+                setMainData(data.map(el => {
+                    return { ...el, i: 0, value: get(el, 'AppliedFC'), comment: get(el, 'Comments') }
+                }))
+            })
+            .catch(err => {
+                if (get(err, 'response.status') == 401) {
+                    navigate('/login')
+                    return
+                }
+                errorNotify(get(err, 'response.data.message', `Ma'lumot yuklashda xatolik yuz berdi`) || `Ma'lumot yuklashda xatolik yuz berdi`)
+            });
 
+
+        return;
+    };
 
     const getAcct = (acct, i) => {
         if (acct.length == 0) {
@@ -86,13 +116,16 @@ const Order = () => {
         let sum = data.reduce((a, b) => a + Number(b.value), 0)
         let body = {
             "DocType": "rAccount",
-            "CardCode": "94107",
+            "CardCode": data[0].AcctCode,
             "CashAccount": "50103",
             "DocCurrency": "UZS",
             "DocObjectCode": "bopot_OutgoingPayments",
             "CashSum": sum,
             "CashSumFC": sum,
             "CashSumSys": sum,
+            "Remarks": get(data, '[0].comment'),
+            "JournalRemarks": get(data, '[0].comment'),
+            "U_account_name": data[0].AcctName,
             "PaymentAccounts": data.map(item => {
                 return { AccountCode: item.AcctCode, SumPaid: Number(item.value), SumPaidFC: Number(item.value) }
             })
@@ -134,9 +167,9 @@ const Order = () => {
                                     <button onClick={() => navigate('/outgoing')} className='btn-back'>Назад</button>
                                     <h3 className='title-menu'>Исходящий платеж</h3>
                                 </div>
-                                <button disabled={!isDisabled} onClick={addOutgoingPayment} className={`btn-head position-relative ${!isDisabled ? "opacity-5" : ''}`}>
+                                {!id && <button disabled={!isDisabled} onClick={addOutgoingPayment} className={`btn-head position-relative ${!isDisabled ? "opacity-5" : ''}`}>
                                     {orderLoading ? <Spinner /> : 'Добавить'}
-                                </button>
+                                </button>}
                             </div>
                         </div>
                         <div className='table' >
@@ -146,8 +179,9 @@ const Order = () => {
                                     <li className='table-head-item w-100'>Код счета</li>
                                     <li className='table-head-item w-100'>Название счета</li>
                                     <li className='table-head-item w-100'>Всего</li>
+                                    <li className='table-head-item w-100'>Комментарий</li>
                                     <li className='table-head-item w-50'>Валюта</li>
-                                    <li className='table-head-item w-50'>Удалить</li>
+                                    {/* <li className='table-head-item w-50'>Удалить</li> */}
                                 </ul>
                             </div>
                             <div className='table-body'>
@@ -166,6 +200,7 @@ const Order = () => {
                                                                     <input
                                                                         style={{ width: '80%' }}
                                                                         type="search"
+                                                                        disabled={id}
                                                                         value={get(item, 'AcctCode', '') || ''}
                                                                         className={`table-body-inp bg-white`}
                                                                         onChange={(e) => {
@@ -210,6 +245,7 @@ const Order = () => {
                                                                 <div className='w-100 p-16' >
                                                                     <input
                                                                         type="text"
+                                                                        disabled={id}
                                                                         value={get(item, 'value', '')
                                                                             ? formatterCurrency(Number(get(item, 'value', '')), "UZS").replace("UZS", "").trim()
                                                                             : ''}
@@ -224,16 +260,32 @@ const Order = () => {
                                                                         placeholder="Введите число"
                                                                     />
                                                                 </div>
+                                                                <div className='w-100 p-16' >
+                                                                    <input
+                                                                        type="text"
+                                                                        disabled={id}
+                                                                        value={get(item, 'comment', '')}
+                                                                        className={`table-body-inp bg-white`}
+                                                                        onChange={(e) => {
+                                                                            const updatedCars = mainData.map((el, index) =>
+                                                                                el.i === i ? { ...el, comment: e.target.value } : el
+                                                                            );
+                                                                            setMainData(updatedCars.sort((a, b) => a.i - b.i));
+                                                                        }}
+                                                                        style={{ width: '85%' }}
+                                                                        placeholder="Введите комментарию"
+                                                                    />
+                                                                </div>
                                                                 <div className='w-50 p-16' >
                                                                     <p className='table-body-text truncated-text' title={get(item, 'ItemName', '')}>
                                                                         UZS
                                                                     </p>
                                                                 </div>
-                                                                <div className='w-50 p-16' >
+                                                                {/* <div className='w-50 p-16' >
                                                                     <button type="button" className='close-btn'>
                                                                         &times;
                                                                     </button>
-                                                                </div>
+                                                                </div> */}
                                                             </div>
                                                         </li>
                                                     </LazyLoad>

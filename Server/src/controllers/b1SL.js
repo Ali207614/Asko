@@ -451,6 +451,35 @@ class b1SL {
                 }
             });
     }
+    deletePaymentDrafts = async (req, res, next) => {
+        const axios = Axios.create({
+            baseURL: `${this.api}`,
+            timeout: 30000,
+            headers: {
+                'Cookie': get(getSession(), 'Cookie[0]', '') + get(getSession(), 'Cookie[1]', ''),
+                'SessionId': get(getSession(), 'SessionId', '')
+            },
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+        });
+        return axios
+            .delete(`/PaymentDrafts(${req.params.id})`)
+            .then(async ({ data }) => {
+                return res.status(200).json()
+            })
+            .catch(async (err) => {
+                if (get(err, 'response.status') == 401) {
+                    let token = await this.auth()
+                    if (token.status) {
+                        return await this.deletePaymentDrafts(req, res, next)
+                    }
+                    return res.status(get(err, 'response.status', 400) || 400).json({ message: get(err, 'response.data.error.message.value') })
+                } else {
+                    return res.status(get(err, 'response.status', 400) || 400).json({ message: get(err, 'response.data.error.message.value') })
+                }
+            });
+    }
 
 
 }

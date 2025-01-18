@@ -28,7 +28,6 @@ class b1HANA {
             let data = await dbService.execute(sql);
             return data;
         } catch (e) {
-            console.log(e, ' bu e')
             throw new Error(e);
         }
     };
@@ -135,7 +134,6 @@ class b1HANA {
             return res.status(200).json(newInvoices)
         }
         catch (error) {
-            console.log(error)
             next(error); // Xatolikni middleware orqali qaytarish
         }
     };
@@ -408,7 +406,6 @@ class b1HANA {
             }));
         }
         catch (error) {
-            console.log(error)
             next(error); // Xatolikni middleware orqali qaytarish
         }
     };
@@ -514,7 +511,6 @@ class b1HANA {
             // Yangilangan `cars` arrayini qaytarish
             return res.status(200).json(carsFromSQL);
         } catch (error) {
-            console.log(error)
             next(error); // Xatolarni qayta ishlash
         }
     };
@@ -742,11 +738,24 @@ class b1HANA {
             let { offset, limit, status, search } = req.query
             const branch = req.user.U_branch;
             let query = await DataRepositories.outGoing(branch, req.query);
-            console.log(query)
             const data = await this.execute(query);
             return res.status(200).json(data)
         }
         catch (error) {
+            console.log(error)
+            return res.status(404).json(error)
+        }
+    }
+    getOutgoingPaymentById = async (req, res, next) => {
+        try {
+            let { id, draft } = req.params
+            const branch = req.user.U_branch;
+            let query = await DataRepositories.outGoingByDocEntry(id, draft);
+            const data = await this.execute(query);
+            return res.status(200).json(data)
+        }
+        catch (error) {
+            console.log(error)
             return res.status(404).json(error)
         }
     }
