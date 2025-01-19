@@ -746,6 +746,36 @@ class b1HANA {
             return res.status(404).json(error)
         }
     }
+    cashReport = async (req, res, next) => {
+        try {
+            const branch = req.user.U_branch;
+
+            let merchant = await Merchant.find()
+            if (merchant.length) {
+                let merchants = [...new Set(merchant.filter(item => item.U_status == '01').map(item => item.U_schot))]
+                let query = await DataRepositories.cashReport(branch, merchants);
+                let data = await this.execute(query);
+                data = data.filter(item => item?.OcrCode).map(item => {
+                    return { ...item, AcctName: merchant.find(el => el?.U_schot == get(item, 'AcctCode'))?.U_merchant }
+                })
+                return res.status(200).json(data)
+            }
+            let queryM = await DataRepositories.getMerchant()
+            const dataM = await this.execute(queryM);
+            let merchants = [...new Set(dataM.filter(item => item.U_status == '01').map(item => item.U_schot))]
+            let query = await DataRepositories.cashReport(branch, merchants);
+            let data = await this.execute(query);
+            data = data.filter(item => item?.OcrCode).map(item => {
+                return { ...item, AcctName: dataM.find(el => el?.U_schot == get(item, 'AcctCode'))?.U_merchant }
+            })
+            return res.status(200).json(data)
+
+        }
+        catch (error) {
+            console.log(error)
+            return res.status(404).json(error)
+        }
+    }
     getOutgoingPaymentById = async (req, res, next) => {
         try {
             let { id, draft } = req.params

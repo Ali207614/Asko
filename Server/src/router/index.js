@@ -34,6 +34,7 @@ router.get('/api/getMerchant', authMiddleware, b1HANA.getMerchant);
 router.get('/api/getUFD', authMiddleware, b1HANA.getUserDefinedField);
 router.get('/api/getDisCount', authMiddleware, b1HANA.getDisCount);
 router.get('/api/getDiscountGroups', authMiddleware, b1HANA.getDiscountGroups);
+router.get('/api/cash-report', authMiddleware, b1HANA.cashReport);
 
 router.get('/api/getOutgoingPayment', authMiddleware, b1HANA.getOutgoingPayment);
 router.post('/api/paymentDrafts', authMiddleware, b1SL.paymentDrafts);

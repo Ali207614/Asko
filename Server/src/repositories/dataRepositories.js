@@ -465,6 +465,57 @@ WHERE T0."DocType" = 'A'
         SELECT T0."AcctCode", T0."AcctName", T0."CurrTotal", T0."Levels" FROM ${this.db}.OACT T0  WHERE T0."AcctCode" like '94%'
         `;
     }
+    cashReport(U_branch, merchants) {
+        return `
+        SELECT
+            A1."OcrCode", A0."Type", A0."AcctCode", SUM(A0."InSum") AS "InSum", SUM(A0."OutSum") AS "OutSum", SUM(A0."InSum")-SUM(A0."OutSum") AS "Balance" 
+            FROM 
+            (
+            SELECT
+            T1."OcrCode" AS "OcrCode", 'Incoming' AS "Type", T2."AcctCode", SUM(T1."AppliedFC") AS "InSum", 0 AS "OutSum"
+            FROM ${this.db}.ORCT T0 INNER JOIN ${this.db}.RCT2 T1 ON T1."DocNum" = T0."DocEntry"
+            INNER JOIN ${this.db}.OACT T2 ON T2."AcctCode" = T0."CashAcct"
+            WHERE T2."AcctCode" in (${merchants}) AND T0."Canceled" = 'N'
+            GROUP BY T1."OcrCode", T2."AcctCode"
+
+            UNION ALL
+
+            SELECT B0."ProfitCode", 'Incoming',B0."Account", SUM(B0."FCDebit"), 0 FROM ${this.db}.JDT1 B0 WHERE B0."TransId" = '174' AND B0."Account" LIKE '5%'
+            GROUP BY B0."ProfitCode", B0."Account"
+
+            UNION ALL 
+
+            SELECT 
+            T1."OcrCode", 'Outgoing', T3."AcctCode", 0, SUM(T1."AppliedFC")
+            FROM ${this.db}.OVPM T0 INNER JOIN ${this.db}.VPM4 T1 ON T1."DocNum" = T0."DocEntry"
+            INNER JOIN ${this.db}.OACT T2 ON T2."AcctCode" = T1."AcctCode" AND (T2."AcctCode" LIKE '5%' OR T2."AcctCode" LIKE '94%')
+            INNER JOIN ${this.db}.OACT T3 ON T3."AcctCode" = T0."CashAcct" 
+            WHERE T3."AcctCode" in (${merchants}) AND T0."Canceled" = 'N'
+            GROUP BY T1."OcrCode", T3."AcctCode"
+
+            UNION ALL
+
+            SELECT T1."OcrCode", 'Outgoing', T2."AcctCode", 0, SUM(T1."AppliedFC")
+            FROM ${this.db}.ORCT T0 INNER JOIN ${this.db}.RCT4 T1 ON T1."DocNum" = T0."DocEntry"
+            INNER JOIN ${this.db}.OACT T2 ON T2."AcctCode" = T1."AcctCode"
+            WHERE T0."Canceled" = 'N' AND T2."AcctCode" in (${merchants}) 
+            AND (T0."CashAcct" LIKE '56%' OR T0."TrsfrAcct" LIKE '51%') AND T1."AcctCode" LIKE '57%' 
+            GROUP BY T1."OcrCode", T2."AcctCode"
+
+            UNION ALL
+
+            -- FOIZ
+
+            SELECT T0."ProfitCode", 'MerchOut', T3."AcctCode", 0,  SUM(T0."FCCredit")
+            FROM ${this.db}.JDT1 T0 INNER JOIN ${this.db}.OJDT T2 ON T2."TransId" = T0."TransId"
+            AND T2."StornoToTr" IS NULL AND T0."TransId" NOT IN (SELECT A0."StornoToTr" FROM ${this.db}.OJDT A0 WHERE A0."StornoToTr" IS NOT NULL)
+            INNER JOIN ${this.db}.OACT T3 ON T3."AcctCode" = T0."Account"
+            WHERE T3."AcctCode" in (${merchants}) AND T0."FCCredit" > 0 AND T0."Account" LIKE '57%' AND T0."ContraAct" LIKE '94%' 
+            GROUP BY T0."ProfitCode", T3."AcctCode"
+            ) AS A0 LEFT JOIN ${this.db}.OOCR A1 ON A0."OcrCode" = A1."OcrCode" AND A1."DimCode" = '1' and A0."OcrCode" = '${U_branch}'
+            GROUP BY A1."OcrCode", A0."Type", A0."AcctCode"
+        `;
+    }
 
 
 

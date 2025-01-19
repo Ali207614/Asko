@@ -47,6 +47,18 @@ const Header = () => {
                       Исходящий платеж
                     </NavLink>
                   </li>
+
+                  <li className='list-item'>
+                    <NavLink
+                      to="/cash-report"
+                      className={() => {
+                        const isActive = location.pathname.startsWith('/cash-report');
+                        return `list-item-link ${isActive ? 'opacity-1' : ''}`;
+                      }}
+                    >
+                      Кассовый отчет
+                    </NavLink>
+                  </li>
                 </ul>
               </nav>
             </div>

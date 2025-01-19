@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { Launch, Login, Home, Order, Outgoing, Payment } from '../screens';
+import { Launch, Login, Home, Order, Outgoing, Payment, CashReport } from '../screens';
 
 function App() {
   return (
@@ -14,6 +14,7 @@ function App() {
         <Route path="/outgoing" element={<Outgoing />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/payment/:id/:draft" element={<Payment />} />
+        <Route path="/cash-report" element={<CashReport />} />
 
       </Routes>
     </BrowserRouter>
